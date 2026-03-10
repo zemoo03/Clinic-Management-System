@@ -5,10 +5,10 @@ import useLocalStorage from '../hooks/useLocalStorage';
 
 const PharmacyDashboard = () => {
     const [prescriptions] = useLocalStorage('incoming_prescriptions', [
-        { id: 'RX-001', patient: 'Rahul Verma', doctor: 'Dr. Sharma', clinic: 'SmartClinic', status: 'Pending', items: 3, total: 450, time: '10 mins ago', clinicId: 'CLINIC001' },
-        { id: 'RX-002', patient: 'Sita Rani', doctor: 'Dr. Sharma', clinic: 'SmartClinic', status: 'Dispensed', items: 2, total: 320, time: '25 mins ago', clinicId: 'CLINIC001' },
+        { id: 'RX-001', patient: 'Rahul Verma', doctor: 'Dr. Payal Patel', clinic: 'SmartClinic', status: 'Pending', items: 3, total: 450, time: '10 mins ago', clinicId: 'CLINIC001' },
+        { id: 'RX-002', patient: 'Sita Rani', doctor: 'Dr. Payal Patel', clinic: 'SmartClinic', status: 'Dispensed', items: 2, total: 320, time: '25 mins ago', clinicId: 'CLINIC001' },
         { id: 'RX-003', patient: 'Amit Singh', doctor: 'Dr. Patel', clinic: 'City Care Clinic', status: 'Pending', items: 4, total: 780, time: '1 hour ago', clinicId: 'CLINIC002' },
-        { id: 'RX-004', patient: 'Priya Desai', doctor: 'Dr. Sharma', clinic: 'SmartClinic', status: 'Dispensed', items: 1, total: 150, time: '2 hours ago', clinicId: 'CLINIC001' },
+        { id: 'RX-004', patient: 'Priya Desai', doctor: 'Dr. Payal Patel', clinic: 'SmartClinic', status: 'Dispensed', items: 1, total: 150, time: '2 hours ago', clinicId: 'CLINIC001' },
     ]);
 
     const [inventory] = useLocalStorage('store_inventory', []);

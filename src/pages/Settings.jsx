@@ -9,7 +9,7 @@ const Settings = () => {
 
     const [clinicSettings, setClinicSettings] = useState({
         clinicName: 'SmartClinic',
-        doctorName: user?.name || 'Dr. Sharma',
+        doctorName: user?.name || 'Dr. Payal Patel',
         specialty: 'General Medicine',
         phone: '+91 98765 43210',
         email: user?.email || 'doctor@clinic.com',

@@ -1,47 +1,51 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import {
     LayoutDashboard, Users, Calendar, ClipboardList, Wallet, BarChart3,
-    Settings, LogOut, Package, FileText, Link2, Store, Building2
+    Settings, LogOut, Stethoscope, UserCog, Shield, Pill, Package, FileText,
+    Syringe, Apple, ScanLine, FolderOpen, Heart, User
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ToastContainer } from './components/Toast';
 
-// Clinic Pages
+// Pages — Clinic
 import Dashboard from './pages/Dashboard';
 import Patients from './pages/Patients';
-import Appointments from './pages/Appointments';
+import Queue from './pages/Appointments';
 import Consultation from './pages/Consultation';
 import Billing from './pages/Billing';
 import Reports from './pages/Reports';
 import SettingsPage from './pages/Settings';
+import IndoorDispensary from './pages/IndoorDispensary';
+import OutdoorDispensary from './pages/OutdoorDispensary';
+import DietTemplates from './pages/DietTemplates';
+import DocumentScanner from './pages/DocumentScanner';
 
-// Medical Store Pages
-import PharmacyDashboard from './pages/PharmacyDashboard';
-import Inventory from './pages/Inventory';
-import Prescriptions from './pages/Prescriptions';
-
-// Shared Pages
-import LinkedEntities from './pages/LinkedEntities';
+import PatientDashboard from './pages/PatientDashboard';
 
 /* ═══════════════════════════════
-   CLINIC SIDEBAR
+   DOCTOR SIDEBAR
    ═══════════════════════════════ */
-const ClinicSidebar = () => {
-    const { logout } = useAuth();
+const DoctorSidebar = () => {
+    const { logout, user } = useAuth();
     const location = useLocation();
 
-    const mainNav = [
+    const clinicalItems = [
         { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-        { path: '/appointments', icon: Calendar, label: 'Appointments' },
-        { path: '/patients', icon: Users, label: 'Patients' },
-        { path: '/consultations', icon: ClipboardList, label: 'Consultation' },
+        { path: '/queue', icon: Calendar, label: 'Patient Queue' },
+        { path: '/patients', icon: Users, label: 'Patient Records' },
+        { path: '/consultations', icon: Stethoscope, label: 'Consultation' },
     ];
 
-    const secondaryNav = [
-        { path: '/billing', icon: Wallet, label: 'Billing' },
+    const dispensaryItems = [
+        { path: '/indoor-dispensary', icon: Syringe, label: 'Indoor Dispensary' },
+        { path: '/outdoor-dispensary', icon: Pill, label: 'Outdoor Dispensary' },
+        { path: '/diet-templates', icon: Apple, label: 'Diet & Homecare' },
+        { path: '/documents', icon: ScanLine, label: 'Document Scanner' },
+    ];
+
+    const mgmtItems = [
         { path: '/reports', icon: BarChart3, label: 'Reports' },
-        { path: '/linked-stores', icon: Store, label: 'Linked Stores' },
         { path: '/settings', icon: Settings, label: 'Settings' },
     ];
 
@@ -56,15 +60,25 @@ const ClinicSidebar = () => {
                 <div className="logo-icon">SC</div>
                 <span className="logo-text">SmartClinic</span>
             </div>
+            <div className="role-badge doctor-badge">
+                <Stethoscope size={13} />
+                <span>{user?.name || 'Doctor'}</span>
+            </div>
             <nav>
-                <span className="nav-section-title">Main Menu</span>
-                {mainNav.map((item) => (
+                <span className="nav-section-title">Clinical</span>
+                {clinicalItems.map((item) => (
+                    <Link key={item.path} to={item.path} className={`nav-link ${isActive(item.path) ? 'active' : ''}`}>
+                        <item.icon size={19} /><span>{item.label}</span>
+                    </Link>
+                ))}
+                <span className="nav-section-title">Dispensary</span>
+                {dispensaryItems.map((item) => (
                     <Link key={item.path} to={item.path} className={`nav-link ${isActive(item.path) ? 'active' : ''}`}>
                         <item.icon size={19} /><span>{item.label}</span>
                     </Link>
                 ))}
                 <span className="nav-section-title">Management</span>
-                {secondaryNav.map((item) => (
+                {mgmtItems.map((item) => (
                     <Link key={item.path} to={item.path} className={`nav-link ${isActive(item.path) ? 'active' : ''}`}>
                         <item.icon size={19} /><span>{item.label}</span>
                     </Link>
@@ -76,21 +90,26 @@ const ClinicSidebar = () => {
 };
 
 /* ═══════════════════════════════
-   STORE SIDEBAR
+   ASSISTANT SIDEBAR
    ═══════════════════════════════ */
-const StoreSidebar = () => {
-    const { logout } = useAuth();
+const AssistantSidebar = () => {
+    const { logout, user } = useAuth();
     const location = useLocation();
 
-    const mainNav = [
+    const receptionItems = [
         { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-        { path: '/inventory', icon: Package, label: 'Inventory' },
-        { path: '/prescriptions', icon: FileText, label: 'Prescriptions' },
+        { path: '/queue', icon: Calendar, label: 'Queue Manager' },
+        { path: '/patients', icon: Users, label: 'Patients' },
+        { path: '/billing', icon: Wallet, label: 'Billing' },
     ];
 
-    const secondaryNav = [
-        { path: '/linked-clinics', icon: Building2, label: 'Linked Clinics' },
-        { path: '/billing', icon: Wallet, label: 'Billing' },
+    const dispensaryItems = [
+        { path: '/indoor-dispensary', icon: Syringe, label: 'Indoor Dispensary' },
+        { path: '/outdoor-dispensary', icon: Pill, label: 'Outdoor Dispensary' },
+        { path: '/documents', icon: ScanLine, label: 'Document Scanner' },
+    ];
+
+    const mgmtItems = [
         { path: '/reports', icon: BarChart3, label: 'Reports' },
         { path: '/settings', icon: Settings, label: 'Settings' },
     ];
@@ -101,20 +120,70 @@ const StoreSidebar = () => {
     };
 
     return (
-        <aside className="sidebar sidebar-store">
+        <aside className="sidebar">
             <div className="logo-container">
-                <div className="logo-icon store-logo">MP</div>
-                <span className="logo-text">MedPlus</span>
+                <div className="logo-icon">SC</div>
+                <span className="logo-text">SmartClinic</span>
+            </div>
+            <div className="role-badge assistant-badge">
+                <UserCog size={13} />
+                <span>{user?.name || 'Receptionist'}</span>
             </div>
             <nav>
-                <span className="nav-section-title">Pharmacy</span>
-                {mainNav.map((item) => (
+                <span className="nav-section-title">Reception</span>
+                {receptionItems.map((item) => (
+                    <Link key={item.path} to={item.path} className={`nav-link ${isActive(item.path) ? 'active' : ''}`}>
+                        <item.icon size={19} /><span>{item.label}</span>
+                    </Link>
+                ))}
+                <span className="nav-section-title">Dispensary</span>
+                {dispensaryItems.map((item) => (
                     <Link key={item.path} to={item.path} className={`nav-link ${isActive(item.path) ? 'active' : ''}`}>
                         <item.icon size={19} /><span>{item.label}</span>
                     </Link>
                 ))}
                 <span className="nav-section-title">Management</span>
-                {secondaryNav.map((item) => (
+                {mgmtItems.map((item) => (
+                    <Link key={item.path} to={item.path} className={`nav-link ${isActive(item.path) ? 'active' : ''}`}>
+                        <item.icon size={19} /><span>{item.label}</span>
+                    </Link>
+                ))}
+            </nav>
+            <button onClick={logout} className="logout-btn"><LogOut size={19} /><span>Logout</span></button>
+        </aside>
+    );
+};
+
+/* ═══════════════════════════════
+   PATIENT SIDEBAR
+   ═══════════════════════════════ */
+const PatientSidebar = () => {
+    const { logout, user } = useAuth();
+    const location = useLocation();
+
+    const navItems = [
+        { path: '/', icon: LayoutDashboard, label: 'My Health' },
+        { path: '/settings', icon: Settings, label: 'Settings' },
+    ];
+
+    const isActive = (path) => {
+        if (path === '/') return location.pathname === '/';
+        return location.pathname.startsWith(path);
+    };
+
+    return (
+        <aside className="sidebar">
+            <div className="logo-container">
+                <div className="logo-icon"><Heart size={20} /></div>
+                <span className="logo-text">MyClinic</span>
+            </div>
+            <div className="role-badge patient-badge">
+                <User size={13} />
+                <span>{user?.name || 'Patient'}</span>
+            </div>
+            <nav>
+                <span className="nav-section-title">Patient Portal</span>
+                {navItems.map((item) => (
                     <Link key={item.path} to={item.path} className={`nav-link ${isActive(item.path) ? 'active' : ''}`}>
                         <item.icon size={19} /><span>{item.label}</span>
                     </Link>
@@ -130,25 +199,30 @@ const StoreSidebar = () => {
    ═══════════════════════════════ */
 const BottomNav = () => {
     const location = useLocation();
-    const { isClinic } = useAuth();
+    const { isDoctor, isPatient } = useAuth();
 
-    const clinicNav = [
+    const doctorNav = [
         { path: '/', icon: LayoutDashboard, label: 'Home' },
+        { path: '/queue', icon: Calendar, label: 'Queue' },
+        { path: '/consultations', icon: Stethoscope, label: 'Consult' },
+        { path: '/patients', icon: Users, label: 'Records' },
+        { path: '/settings', icon: Settings, label: 'More' },
+    ];
+
+    const assistantNav = [
+        { path: '/', icon: LayoutDashboard, label: 'Home' },
+        { path: '/queue', icon: Calendar, label: 'Queue' },
         { path: '/patients', icon: Users, label: 'Patients' },
-        { path: '/appointments', icon: Calendar, label: 'Queue' },
-        { path: '/consultations', icon: ClipboardList, label: 'Consult' },
+        { path: '/billing', icon: Wallet, label: 'Billing' },
         { path: '/settings', icon: Settings, label: 'More' },
     ];
 
-    const storeNav = [
-        { path: '/', icon: LayoutDashboard, label: 'Home' },
-        { path: '/inventory', icon: Package, label: 'Inventory' },
-        { path: '/prescriptions', icon: FileText, label: 'Rx' },
-        { path: '/linked-clinics', icon: Building2, label: 'Clinics' },
+    const patientNav = [
+        { path: '/', icon: LayoutDashboard, label: 'My Health' },
         { path: '/settings', icon: Settings, label: 'More' },
     ];
 
-    const navItems = isClinic ? clinicNav : storeNav;
+    const navItems = isPatient ? patientNav : isDoctor ? doctorNav : assistantNav;
 
     return (
         <nav className="bottom-nav">
@@ -165,13 +239,19 @@ const BottomNav = () => {
    PROTECTED LAYOUT
    ═══════════════════════════════ */
 const ProtectedLayout = ({ children }) => {
-    const { user, isClinic } = useAuth();
+    const { user, isDoctor, isPatient } = useAuth();
     if (!user) return <Navigate to="/login" />;
+
+    const getSidebar = () => {
+        if (isPatient) return <PatientSidebar />;
+        if (isDoctor) return <DoctorSidebar />;
+        return <AssistantSidebar />;
+    };
 
     return (
         <div className="dashboard-layout">
             <div className="hidden-mobile">
-                {isClinic ? <ClinicSidebar /> : <StoreSidebar />}
+                {getSidebar()}
             </div>
             <main className="content">{children}</main>
             <div className="visible-mobile"><BottomNav /></div>
@@ -180,96 +260,299 @@ const ProtectedLayout = ({ children }) => {
 };
 
 /* ═══════════════════════════════
-   LOGIN PAGE — with Clinic / Store toggle
+   ENTITY STORAGE HELPERS
+   ═══════════════════════════════ */
+const getEntities = () => JSON.parse(localStorage.getItem('scms_entities') || '[]');
+const saveEntities = (entities) => localStorage.setItem('scms_entities', JSON.stringify(entities));
+
+// Seed a default clinic + pharmacy on first load
+const seedDefaults = () => {
+    const existing = getEntities();
+    if (existing.length === 0) {
+        const defaults = [
+            {
+                id: 'CLINIC001', type: 'clinic', name: 'SmartClinic',
+                address: 'MG Road, Mumbai - 400001', phone: '+91 98765 43210',
+                doctor: 'Dr. Payal Patel', specialty: 'General Medicine',
+                users: [
+                    { role: 'doctor', userId: 'doc01', password: 'doc123', displayName: 'Dr. Payal Patel' },
+                    { role: 'assistant', userId: 'asst01', password: 'asst123', displayName: 'Receptionist' },
+                ],
+                createdAt: new Date().toISOString(),
+            }
+        ];
+        saveEntities(defaults);
+        return defaults;
+    }
+    return existing;
+};
+
+/* ═══════════════════════════════
+   LOGIN PAGE — Multi-Entity
    ═══════════════════════════════ */
 const Login = () => {
-    const { login } = useAuth();
-    const [email, setEmail] = useState('doctor@clinic.com');
+    const { login, user } = useAuth();
+    const navigate = useNavigate();
+
+    const [entities, setEntities] = useState(() => seedDefaults());
+    const [selectedEntityId, setSelectedEntityId] = useState(entities[0]?.id || '');
+    const [userId, setUserId] = useState('');
     const [password, setPassword] = useState('');
-    const [entityCode, setEntityCode] = useState('CLINIC001');
-    const [entityType, setEntityType] = useState('clinic'); // 'clinic' or 'store'
+    const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isPatientLogin, setIsPatientLogin] = useState(false);
+
+    // Registration modal state
+    const [showRegister, setShowRegister] = useState(false);
+    const [regForm, setRegForm] = useState({
+        name: '', address: '', phone: '',
+        doctorName: '', specialty: 'General Medicine',
+        docUserId: '', docPassword: '',
+        asstUserId: '', asstPassword: ''
+    });
+
+    if (user) return <Navigate to="/" />;
+
+    const selectedEntity = entities.find(e => e.id === selectedEntityId);
+    const clinics = entities.filter(e => e.type === 'clinic');
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        setError('');
+        if (!selectedEntity && !isPatientLogin) { setError('Please select a clinic.'); return; }
         setIsLoading(true);
-        try {
-            await login(email, password || 'demo', entityCode, entityType);
-        } catch {
-            // Error handled inside login
+
+        if (isPatientLogin) {
+            // Patient login logic
+            const patientsList = JSON.parse(localStorage.getItem('patients') || '[]');
+            // Try authenticating with mobile as User ID and specific ID as password
+            const matchedPatient = patientsList.find(
+                p => (p.mobile === userId.trim() || p.id === userId.trim()) && p.id === password.trim()
+            );
+
+            if (matchedPatient) {
+                // login as patient
+                const patientWithRole = { ...matchedPatient, defaultName: matchedPatient.name, idPrefix: matchedPatient.id };
+                await login(matchedPatient.name, 'patient', selectedEntityId || 'CLINIC001');
+
+                // Override user context to pass full patient ID etc if needed via localStorage directly since AuthContext doesn't handle full patient object inside user, or we can just let PatientDashboard fetch the patient by ID. Wait, AuthContext sets user id to `cfg.idPrefix` which defaults to `pat_001` for patients! We must fix AuthContext login so it accepts overriding id! Actually, I'll manually modify `scms_user` after `login` returns.
+                const userObj = JSON.parse(localStorage.getItem('scms_user'));
+                userObj.id = matchedPatient.id;
+                userObj.name = matchedPatient.name;
+                localStorage.setItem('scms_user', JSON.stringify(userObj));
+                // We also reload to make sure AuthContext picks up the new user Obj.
+                window.location.href = '/';
+                return;
+            } else {
+                setError('Invalid Patient ID or Mobile Number.');
+            }
+        } else {
+            // Staff login logic
+            const matchedUser = selectedEntity.users.find(
+                u => u.userId === userId.trim() && u.password === password
+            );
+
+            if (matchedUser) {
+                await login(matchedUser.displayName, matchedUser.role, selectedEntity.id);
+                navigate('/');
+            } else {
+                setError('Invalid User ID or Password.');
+            }
         }
         setIsLoading(false);
     };
 
-    const switchEntityType = (type) => {
-        setEntityType(type);
-        if (type === 'clinic') {
-            setEntityCode('CLINIC001');
-            setEmail('doctor@clinic.com');
-        } else {
-            setEntityCode('STORE001');
-            setEmail('store@medplus.com');
-        }
+    const handleRegister = (e) => {
+        e.preventDefault();
+        const newId = `CLN${String(Date.now()).slice(-6)}`;
+
+        const newEntity = {
+            id: newId, type: 'clinic', name: regForm.name,
+            address: regForm.address, phone: regForm.phone,
+            doctor: regForm.doctorName, specialty: regForm.specialty,
+            users: [
+                { role: 'doctor', userId: regForm.docUserId || 'doctor', password: regForm.docPassword || '1234', displayName: regForm.doctorName || 'Doctor' },
+                { role: 'assistant', userId: regForm.asstUserId || 'asst', password: regForm.asstPassword || '1234', displayName: 'Receptionist' },
+            ],
+            createdAt: new Date().toISOString(),
+        };
+
+        const updated = [...entities, newEntity];
+        saveEntities(updated);
+        setEntities(updated);
+        setSelectedEntityId(newId);
+        setShowRegister(false);
+        setRegForm({ name: '', address: '', phone: '', doctorName: '', specialty: 'General Medicine', docUserId: '', docPassword: '', asstUserId: '', asstPassword: '' });
     };
 
     return (
         <div className="login-container">
-            <div className="login-card animate-fade-in">
-                <div className="logo-container centered">
-                    <div className={`logo-icon large ${entityType === 'store' ? 'store-logo' : ''}`}>
-                        {entityType === 'clinic' ? 'SC' : 'MP'}
+            {/* ── Registration Modal ── */}
+            {showRegister && (
+                <div className="modal-overlay" onClick={() => setShowRegister(false)}>
+                    <div className="modal-content modal-lg animate-fade-in" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>🏥 Register New Clinic</h2>
+                            <button className="modal-close-btn" onClick={() => setShowRegister(false)}>✕</button>
+                        </div>
+                        <form onSubmit={handleRegister}>
+                            <div className="form-grid">
+                                <div className="form-group">
+                                    <label>Clinic Name *</label>
+                                    <input required type="text" placeholder="e.g. City Care Clinic"
+                                        value={regForm.name} onChange={e => setRegForm({ ...regForm, name: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Phone</label>
+                                    <input type="text" placeholder="+91 98765 43210"
+                                        value={regForm.phone} onChange={e => setRegForm({ ...regForm, phone: e.target.value })} />
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Address</label>
+                                <input type="text" placeholder="Full address"
+                                    value={regForm.address} onChange={e => setRegForm({ ...regForm, address: e.target.value })} />
+                            </div>
+
+                            <h4 className="font-bold text-sm mt-4 mb-2 flex items-center gap-2">
+                                <Stethoscope size={14} className="text-primary" /> Doctor Credentials
+                            </h4>
+                            <div className="form-grid">
+                                <div className="form-group">
+                                    <label>Doctor Name *</label>
+                                    <input required type="text" placeholder="Dr. Name"
+                                        value={regForm.doctorName} onChange={e => setRegForm({ ...regForm, doctorName: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Specialty</label>
+                                    <input type="text" placeholder="General Medicine"
+                                        value={regForm.specialty} onChange={e => setRegForm({ ...regForm, specialty: e.target.value })} />
+                                </div>
+                            </div>
+                            <div className="form-grid">
+                                <div className="form-group">
+                                    <label>Doctor User ID *</label>
+                                    <input required type="text" placeholder="e.g. doc02"
+                                        value={regForm.docUserId} onChange={e => setRegForm({ ...regForm, docUserId: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Doctor Password *</label>
+                                    <input required type="text" placeholder="e.g. pass123"
+                                        value={regForm.docPassword} onChange={e => setRegForm({ ...regForm, docPassword: e.target.value })} />
+                                </div>
+                            </div>
+                            <h4 className="font-bold text-sm mt-4 mb-2 flex items-center gap-2">
+                                <UserCog size={14} style={{ color: '#10b981' }} /> Assistant Credentials
+                            </h4>
+                            <div className="form-grid">
+                                <div className="form-group">
+                                    <label>Assistant User ID *</label>
+                                    <input required type="text" placeholder="e.g. asst02"
+                                        value={regForm.asstUserId} onChange={e => setRegForm({ ...regForm, asstUserId: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Assistant Password *</label>
+                                    <input required type="text" placeholder="e.g. pass123"
+                                        value={regForm.asstPassword} onChange={e => setRegForm({ ...regForm, asstPassword: e.target.value })} />
+                                </div>
+                            </div>
+
+                            <button type="submit" className="primary-btn mt-4" style={{ width: '100%' }}>
+                                🏥 Register Clinic
+                            </button>
+                        </form>
                     </div>
-                    <h2>Welcome Back</h2>
-                    <p className="login-subtitle">
-                        Sign in to your {entityType === 'clinic' ? 'clinic' : 'medical store'} dashboard
-                    </p>
+                </div>
+            )}
+
+            {/* ── Login Card ── */}
+            <div className="login-card animate-fade-in" style={{ maxWidth: 460 }}>
+                <div className="logo-container centered">
+                    <div className="logo-icon large">SC</div>
+                    <h2>SmartClinic</h2>
+                    <p className="login-subtitle">Clinic Management System</p>
                 </div>
 
-                {/* Entity Type Toggle */}
-                <div className="entity-toggle">
-                    <button
-                        type="button"
-                        className={`entity-toggle-btn ${entityType === 'clinic' ? 'active' : ''}`}
-                        onClick={() => switchEntityType('clinic')}
-                    >
-                        <Building2 size={16} />
-                        <span>Clinic</span>
+                <div className="flex gap-2 mb-4">
+                    <button type="button" className={`secondary-btn ${!isPatientLogin ? 'active' : ''}`} style={{ flex: 1, fontSize: '0.82rem', gap: '0.4rem', borderBottom: !isPatientLogin ? '2px solid var(--primary)' : 'none' }}
+                        onClick={() => { setIsPatientLogin(false); setError(''); }}>
+                        <Stethoscope size={14} /> Staff Login
                     </button>
-                    <button
-                        type="button"
-                        className={`entity-toggle-btn ${entityType === 'store' ? 'active' : ''}`}
-                        onClick={() => switchEntityType('store')}
-                    >
-                        <Store size={16} />
-                        <span>Medical Store</span>
+                    <button type="button" className={`secondary-btn ${isPatientLogin ? 'active' : ''}`} style={{ flex: 1, fontSize: '0.82rem', gap: '0.4rem', borderBottom: isPatientLogin ? '2px solid var(--primary)' : 'none' }}
+                        onClick={() => { setIsPatientLogin(true); setError(''); }}>
+                        <User size={14} /> Patient Login
                     </button>
                 </div>
+
+                {!isPatientLogin && (
+                    <div className="flex gap-2 mb-4">
+                        <button type="button" className="secondary-btn" style={{ flex: 1, fontSize: '0.82rem', gap: '0.4rem' }}
+                            onClick={() => setShowRegister(true)}>
+                            <Stethoscope size={14} /> Add Clinic
+                        </button>
+                    </div>
+                )}
 
                 <form onSubmit={handleLogin}>
+                    {!isPatientLogin && (
+                        <>
+                            {/* Entity Selector */}
+                            <div className="form-group">
+                                <label>Select Clinic</label>
+                                <select
+                                    value={selectedEntityId}
+                                    onChange={e => { setSelectedEntityId(e.target.value); setError(''); }}
+                                    style={{ width: '100%' }}
+                                >
+                                    {clinics.map(c => <option key={c.id} value={c.id}>{c.name} ({c.id})</option>)}
+                                </select>
+                            </div>
+
+                            {/* Show which roles exist for this entity */}
+                            {selectedEntity && (
+                                <div className="flex gap-2 mb-3 flex-wrap">
+                                    {selectedEntity.users.map(u => (
+                                        <span key={u.role} className={`status-badge ${u.role === 'doctor' ? 'status-active' : 'status-waiting'}`}>
+                                            {u.role === 'doctor' ? '👨‍⚕️' : '🧑‍💼'} {u.role}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </>
+                    )}
+
                     <div className="form-group">
-                        <label>{entityType === 'clinic' ? 'Clinic Code' : 'Store Code'}</label>
-                        <input
-                            type="text"
-                            value={entityCode}
-                            onChange={(e) => setEntityCode(e.target.value)}
-                            placeholder={entityType === 'clinic' ? 'e.g. CLINIC001' : 'e.g. STORE001'}
-                            className="uppercase tracking-widest font-mono"
-                        />
+                        <label>{isPatientLogin ? 'Mobile Number / Patient ID' : 'User ID'}</label>
+                        <input required type="text" value={userId}
+                            onChange={(e) => setUserId(e.target.value)}
+                            placeholder={isPatientLogin ? "Enter mobile number or PAT001" : "Enter your User ID"} autoComplete="username" />
                     </div>
                     <div className="form-group">
-                        <label>Email Address</label>
-                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+                        <label>{isPatientLogin ? 'Patient ID (Password)' : 'Password'}</label>
+                        <input required type="password" value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder={isPatientLogin ? "e.g. PAT001" : "Enter your password"} autoComplete="current-password" />
                     </div>
-                    <div className="form-group">
-                        <label>Password</label>
-                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
-                    </div>
-                    <button type="submit" className="primary-btn" disabled={isLoading}>
-                        {isLoading ? 'Signing in...' : `Sign In as ${entityType === 'clinic' ? 'Clinic' : 'Store'}`}
+
+                    {error && (
+                        <p style={{ color: 'var(--accent)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.75rem', textAlign: 'center' }}>
+                            {error}
+                        </p>
+                    )}
+
+                    <button type="submit" className="primary-btn" disabled={isLoading} style={{ width: '100%' }}>
+                        {isLoading ? 'Signing in...' : 'Sign In'}
                     </button>
-                    <p className="forgot-password text-center mt-4">
-                        Register your {entityType === 'clinic' ? 'clinic' : 'medical store'}?
-                    </p>
+
+                    {/* Default credentials hint */}
+                    <div className="login-info mt-4" style={{ background: 'var(--background)', padding: '0.85rem', borderRadius: 'var(--radius)', textAlign: 'left' }}>
+                        <p className="text-xs font-bold text-muted" style={{ marginBottom: '0.4rem' }}>
+                            <Shield size={12} style={{ display: 'inline', verticalAlign: 'middle' }} /> Default Demo Credentials
+                        </p>
+                        <p className="text-xs text-muted" style={{ lineHeight: 1.8 }}>
+                            <strong>SmartClinic →</strong> Doctor: <code>doc01</code>/<code>doc123</code> · Asst: <code>asst01</code>/<code>asst123</code>
+                        </p>
+                    </div>
                 </form>
             </div>
         </div>
@@ -277,37 +560,51 @@ const Login = () => {
 };
 
 /* ═══════════════════════════════
-   APP ROOT — Routes for both entity types
+   APP ROOT — Role-based Routes
    ═══════════════════════════════ */
 const AppRoutes = () => {
-    const { isClinic, isStore } = useAuth();
+    const { isDoctor, isAssistant, isPatient } = useAuth();
 
     return (
         <Routes>
             <Route path="/login" element={<Login />} />
 
-            {/* Dashboard — different for each entity type */}
+            {/* Dashboard — role-aware */}
             <Route path="/" element={
                 <ProtectedLayout>
-                    {isStore ? <PharmacyDashboard /> : <Dashboard />}
+                    {isPatient ? <PatientDashboard /> : <Dashboard />}
                 </ProtectedLayout>
             } />
 
-            {/* Clinic-specific routes */}
+            {/* Shared clinic pages (Doctor + Assistant) */}
+            <Route path="/queue" element={<ProtectedLayout><Queue /></ProtectedLayout>} />
             <Route path="/patients" element={<ProtectedLayout><Patients /></ProtectedLayout>} />
-            <Route path="/appointments" element={<ProtectedLayout><Appointments /></ProtectedLayout>} />
-            <Route path="/consultations" element={<ProtectedLayout><Consultation /></ProtectedLayout>} />
-
-            {/* Store-specific routes */}
-            <Route path="/inventory" element={<ProtectedLayout><Inventory /></ProtectedLayout>} />
-            <Route path="/prescriptions" element={<ProtectedLayout><Prescriptions /></ProtectedLayout>} />
-
-            {/* Shared routes */}
-            <Route path="/billing" element={<ProtectedLayout><Billing /></ProtectedLayout>} />
             <Route path="/reports" element={<ProtectedLayout><Reports /></ProtectedLayout>} />
             <Route path="/settings" element={<ProtectedLayout><SettingsPage /></ProtectedLayout>} />
-            <Route path="/linked-stores" element={<ProtectedLayout><LinkedEntities /></ProtectedLayout>} />
-            <Route path="/linked-clinics" element={<ProtectedLayout><LinkedEntities /></ProtectedLayout>} />
+
+            {/* Dispensary — shared between Doctor and Assistant */}
+            <Route path="/indoor-dispensary" element={<ProtectedLayout><IndoorDispensary /></ProtectedLayout>} />
+            <Route path="/outdoor-dispensary" element={<ProtectedLayout><OutdoorDispensary /></ProtectedLayout>} />
+            <Route path="/documents" element={<ProtectedLayout><DocumentScanner /></ProtectedLayout>} />
+
+            {/* Doctor-only */}
+            <Route path="/consultations" element={
+                <ProtectedLayout>
+                    {isDoctor ? <Consultation /> : <Navigate to="/" />}
+                </ProtectedLayout>
+            } />
+            <Route path="/diet-templates" element={
+                <ProtectedLayout>
+                    {isDoctor ? <DietTemplates /> : <Navigate to="/" />}
+                </ProtectedLayout>
+            } />
+
+            {/* Assistant-only */}
+            <Route path="/billing" element={
+                <ProtectedLayout>
+                    {isAssistant ? <Billing /> : <Navigate to="/" />}
+                </ProtectedLayout>
+            } />
 
             <Route path="*" element={<Navigate to="/" />} />
         </Routes>
@@ -315,6 +612,16 @@ const AppRoutes = () => {
 };
 
 function App() {
+    // One-time migration to force 'Dr. Sharma' to 'Dr. Payal Patel' in browser storage without clearing cache
+    useEffect(() => {
+        ['scms_entities', 'scms_user', 'scms_patients', 'scms_queue', 'store_prescriptions', 'store_inventory'].forEach(key => {
+            const data = localStorage.getItem(key);
+            if (data && data.includes('Dr. Sharma')) {
+                localStorage.setItem(key, data.replace(/Dr\. Sharma/g, 'Dr. Payal Patel'));
+            }
+        });
+    }, []);
+
     return (
         <AuthProvider>
             <Router>

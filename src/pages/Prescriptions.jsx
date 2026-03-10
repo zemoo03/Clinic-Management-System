@@ -10,7 +10,7 @@ import useLocalStorage from '../hooks/useLocalStorage';
 
 const DEMO_PRESCRIPTIONS = [
     {
-        id: 'RX-001', patient: 'Rahul Verma', patientMobile: '9876543210', doctor: 'Dr. Sharma', clinic: 'SmartClinic', clinicId: 'CLINIC001',
+        id: 'RX-001', patient: 'Rahul Verma', patientMobile: '9876543210', doctor: 'Dr. Payal Patel', clinic: 'SmartClinic', clinicId: 'CLINIC001',
         status: 'Pending', date: '2024-02-18', time: '10:15 AM',
         medicines: [
             { name: 'Paracetamol 500mg', dosage: '500mg', frequency: '1-0-1 (Twice a day)', duration: '5 days', qty: 10 },
@@ -19,7 +19,7 @@ const DEMO_PRESCRIPTIONS = [
         ]
     },
     {
-        id: 'RX-002', patient: 'Sita Rani', patientMobile: '8765432109', doctor: 'Dr. Sharma', clinic: 'SmartClinic', clinicId: 'CLINIC001',
+        id: 'RX-002', patient: 'Sita Rani', patientMobile: '8765432109', doctor: 'Dr. Payal Patel', clinic: 'SmartClinic', clinicId: 'CLINIC001',
         status: 'Dispensed', date: '2024-02-18', time: '09:45 AM',
         medicines: [
             { name: 'Amoxicillin 250mg', dosage: '250mg', frequency: '1-0-1 (Twice a day)', duration: '7 days', qty: 14 },
@@ -37,7 +37,7 @@ const DEMO_PRESCRIPTIONS = [
         ]
     },
     {
-        id: 'RX-004', patient: 'Priya Desai', patientMobile: '6543210987', doctor: 'Dr. Sharma', clinic: 'SmartClinic', clinicId: 'CLINIC001',
+        id: 'RX-004', patient: 'Priya Desai', patientMobile: '6543210987', doctor: 'Dr. Payal Patel', clinic: 'SmartClinic', clinicId: 'CLINIC001',
         status: 'Dispensed', date: '2024-02-18', time: '09:00 AM',
         medicines: [
             { name: 'Betadine Ointment', dosage: 'Apply externally', frequency: '1-0-1 (Twice a day)', duration: '7 days', qty: 1 },

@@ -5,51 +5,56 @@ const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')));
+    const [user, setUser] = useState(JSON.parse(localStorage.getItem('scms_user')));
     const [loading, setLoading] = useState(false);
 
     /**
-     * Login supports two entity types:
-     *  - 'clinic'   → Doctor/Receptionist dashboard
-     *  - 'store'    → Medical Store dashboard
+     * Login with role selection:
+     *  - 'doctor'     → Full consultation, EMR, prescription, lab referral access
+     *  - 'assistant'  → Patient registration, queue management, billing/receipts
      */
-    const login = (email, password, entityCode = 'CLINIC001', entityType = 'clinic') => {
-        const isStore = entityType === 'store';
-
-        const dummyUser = {
-            email,
-            name: isStore ? 'MedPlus Pharmacy' : 'Dr. Sharma',
-            role: isStore ? 'pharmacist' : 'doctor',
-            entityType, // 'clinic' or 'store'
-            id: isStore ? 'store_001' : 'doc_001',
-            clinicId: isStore ? null : entityCode,
-            storeId: isStore ? entityCode : null,
-            entityId: entityCode, // universal ID for data scoping
-            subscription: 'premium',
-            // Linked entities: clinics linked to this store / stores linked to this clinic
-            linkedStores: isStore ? [] : ['STORE001', 'STORE002'],
-            linkedClinics: isStore ? ['CLINIC001', 'CLINIC002'] : [],
+    const login = (name, role = 'doctor', clinicCode = 'CLINIC001') => {
+        const roleConfig = {
+            doctor: { defaultName: 'Dr. Payal Patel', idPrefix: 'doc_001' },
+            assistant: { defaultName: 'Receptionist', idPrefix: 'asst_001' },
+            patient: { defaultName: 'Patient Name', idPrefix: 'pat_001' },
         };
-        localStorage.setItem('user', JSON.stringify(dummyUser));
-        setUser(dummyUser);
-        return Promise.resolve(dummyUser);
+
+        const cfg = roleConfig[role] || roleConfig.doctor;
+
+        const userData = {
+            name: name || cfg.defaultName,
+            role,
+            id: cfg.idPrefix,
+            clinicId: clinicCode,
+            clinicName: 'SmartClinic',
+            clinicAddress: 'MG Road, Mumbai - 400001',
+            clinicPhone: '+91 98765 43210',
+            specialty: role === 'doctor' ? 'General Medicine' : role === 'patient' ? 'Patient' : 'Reception',
+            loggedInAt: new Date().toISOString(),
+        };
+        localStorage.setItem('scms_user', JSON.stringify(userData));
+        setUser(userData);
+        return Promise.resolve(userData);
     };
 
     const logout = () => {
-        localStorage.removeItem('user');
+        localStorage.removeItem('scms_user');
         setUser(null);
     };
 
-    const isClinic = user?.entityType === 'clinic';
-    const isStore = user?.entityType === 'store';
+    const isDoctor = user?.role === 'doctor';
+    const isAssistant = user?.role === 'assistant';
+    const isPatient = user?.role === 'patient';
 
     const value = {
         user,
         login,
         logout,
         loading,
-        isClinic,
-        isStore,
+        isDoctor,
+        isAssistant,
+        isPatient,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

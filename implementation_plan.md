@@ -1,51 +1,49 @@
-# Implementation Plan - Smart Multi-Clinic SaaS Platform
+# 🏥 SCMS — Small Clinic Management System
 
 ## Project Overview
-A scalable **SaaS (Software as a Service) platform** designed to be sold to multiple clinics. Each clinic operates in its own isolated environment (multi-tenancy). The system includes a **Mobile Application (PWA/Responsive)** for doctors to manage their practice on the go.
+A **production-ready** clinic management system designed for a standalone clinic with **1 Doctor + 1 Assistant/Receptionist**. Built as a sponsored project.
 
-## 🛠 Tech Stack
-- **Frontend**: React (Vite) - Mobile-First Responsive Design (PWA ready).
-- **Styling**: Vanilla CSS (Mobile-optimized, Glassmorphism).
-- **Backend**: Firebase (Multi-tenant schema using `clinicId`).
-- **Auth**: Role-based (Super Admin, Doctor, Receptionist) linked to specific Clinics.
+## Tech Stack
+- **Frontend**: React (Vite) — Mobile-First Responsive Design
+- **Styling**: Vanilla CSS (Glassmorphism, Modern Design System)
+- **Data**: localStorage (scoped per clinic) — Firebase-ready structure
+- **PDF Generation**: jsPDF + jsPDF-autotable
+- **Charts**: Recharts
+- **Icons**: Lucide React
 
-## 🚀 Phases
+## User Roles & Features
 
-### Phase 1: SaaS Foundation & Mobile Core (Current)
-- [x] Initialize React project.
-- [x] Basic Styling System.
-- [ ] **Refector for Multi-Tenancy**: Update Auth to support Clinic-based login.
-- [ ] **Mobile Layout**: Create a bottom navigation bar for mobile views.
-- [ ] **Doctor Login**: specialized dashboard for doctors.
+### 👩‍⚕️ Doctor
+- [x] Role-based login & dashboard (patient count, revenue, queue preview)
+- [x] View real-time patient queue
+- [x] Open patient EMR (Electronic Medical Record) with visit history
+- [x] Enter vitals (BP, Temp, Pulse, SpO₂, Weight)
+- [x] Enter symptoms, diagnosis, doctor's notes
+- [x] Build e-prescription (Medicine, Dosage, Frequency, Duration)
+- [x] Select lab/radiology referrals from searchable panel
+- [x] Generate prescription PDF
+- [x] Generate referral slip PDF
+- [x] Save & Complete — writes visit to patient EMR
 
-### Phase 2: Patient & Appointment Management
-- [ ] Patient Registration (CRUD).
-- [ ] Appointment Booking & Token Generation.
-- [ ] Live Queue View.
+### 🧑‍💼 Assistant / Receptionist
+- [x] Role-based login & dashboard (queue-focused, quick actions)
+- [x] Register new patients (Name, Age, Gender, Mobile, Blood Group, Allergies)
+- [x] Add patients to daily queue (walk-in or from records)
+- [x] Generate token numbers
+- [x] Update queue status (Waiting → Consulting → Completed)
+- [x] Skip patients
+- [x] View patient records and visit history
+- [x] Create invoices and manage billing
+- [x] Track consultation fees per token
 
-### Phase 3: Consultation & Prescription
-- [ ] Consultation Interface (Symptoms, Diagnosis, Meds).
-- [ ] Digital Prescription Generator (PDF).
-- [ ] Referral Slip Creation.
-
-### Phase 4: Billing & Analytics
-- [ ] Billing Module with UPI QR Integration.
-- [ ] Reports & Analytics (Daily/Monthly Revenue, Patient Trends).
-
-### Phase 5: Polish & Deployment
-- [ ] Mobile Responsiveness Audit.
-- [ ] Final UI/UX Polishing (Micro-animations).
-- [ ] Deployment to Vercel/Firebase Hosting.
-
-## 📁 Directory Structure
+## Directory Structure
 ```text
 /src
-  /assets         # Icons, Images
-  /components     # Reusable UI (Buttons, Cards, Inputs)
-  /context        # AuthContext, ClinicContext
-  /hooks          # usePatients, useAppointments, useAuth
-  /pages          # Dashboard, Patients, Consultation, Billing, Reports
-  /services       # Firebase config, Firestore queries
-  /styles         # Global CSS, variables, themes
-  /utils          # PDF utils, date helpers
+  /components     # Modal, Toast, SearchBar, StatCard, StylusPad, etc.
+  /context        # AuthContext (role-based), ClinicContext
+  /hooks          # usePatients (EMR), useAppointments (Queue), useLocalStorage
+  /pages          # Dashboard, Patients, Queue, Consultation, Billing, Reports, Settings
+  /services       # Firebase config (future)
+  /styles         # index.css — complete design system
+  /utils          # pdfUtils (Prescription, Referral, Invoice), dateHelpers
 ```

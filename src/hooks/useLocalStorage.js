@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 /**
- * Multi-tenant localStorage hook.
- * Data is scoped by entityId (clinic OR store) so different entities have isolated data.
+ * Clinic-scoped localStorage hook.
+ * Data is scoped by clinicId so different clinics have isolated data.
  */
 export const useLocalStorage = (key, initialValue) => {
     const { user } = useAuth();
-    // Use entityId for universal scoping — works for both clinics and stores
-    const scopeId = user?.entityId || user?.clinicId || user?.storeId || 'default';
-    const scopedKey = `${scopeId}_${key}`;
+    const scopeId = user?.clinicId || 'default';
+    const scopedKey = `scms_${scopeId}_${key}`;
 
     const [storedValue, setStoredValue] = useState(() => {
         try {

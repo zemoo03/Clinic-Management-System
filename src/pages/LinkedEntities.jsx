@@ -17,7 +17,7 @@ const AVAILABLE_STORES = [
 ];
 
 const AVAILABLE_CLINICS = [
-    { id: 'CLINIC001', name: 'SmartClinic', doctor: 'Dr. Sharma', specialty: 'General Medicine', address: 'MG Road, Mumbai', phone: '+91 98765 43210', status: 'active' },
+    { id: 'CLINIC001', name: 'SmartClinic', doctor: 'Dr. Payal Patel', specialty: 'General Medicine', address: 'MG Road, Mumbai', phone: '+91 98765 43210', status: 'active' },
     { id: 'CLINIC002', name: 'City Care Clinic', doctor: 'Dr. Patel', specialty: 'Pediatrics', address: 'Bandra, Mumbai', phone: '+91 87654 32109', status: 'active' },
     { id: 'CLINIC003', name: 'Health First', doctor: 'Dr. Gupta', specialty: 'Dermatology', address: 'Juhu, Mumbai', phone: '+91 76543 21098', status: 'active' },
 ];
