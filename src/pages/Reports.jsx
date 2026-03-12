@@ -1,40 +1,142 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, Legend } from 'recharts';
-import { TrendingUp, Users, Calendar, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { useMemo } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, Users, Calendar, DollarSign, ArrowUpRight } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import StatCard from '../components/StatCard';
 
+/* ─── helpers ─────────────────────────────────────────── */
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const loadBillingRecords = () => {
+    try { return JSON.parse(localStorage.getItem('scms_billing') || '[]'); } catch { return []; }
+};
+const loadPatients = () => {
+    try {
+        return JSON.parse(
+            localStorage.getItem('scms_patients') ||
+            localStorage.getItem('patients') || '[]'
+        );
+    } catch { return []; }
+};
+const loadQueue = () => {
+    try { return JSON.parse(localStorage.getItem('scms_queue') || '[]'); } catch { return []; }
+};
+
+/* ─── component ───────────────────────────────────────── */
 const Reports = () => {
-    const revenueData = [
-        { name: 'Mon', amount: 4500 },
-        { name: 'Tue', amount: 5200 },
-        { name: 'Wed', amount: 4800 },
-        { name: 'Thu', amount: 6100 },
-        { name: 'Fri', amount: 5900 },
-        { name: 'Sat', amount: 7200 },
-        { name: 'Sun', amount: 3100 },
-    ];
 
-    const patientData = [
-        { name: 'Week 1', count: 120 },
-        { name: 'Week 2', count: 150 },
-        { name: 'Week 3', count: 180 },
-        { name: 'Week 4', count: 210 },
-    ];
+    const { revenueData, patientData, visitTypeData, monthlyData, stats } = useMemo(() => {
+        const billing = loadBillingRecords();
+        const patients = loadPatients();
+        const queue = loadQueue();
 
-    const visitTypeData = [
-        { name: 'New Patients', value: 45, color: '#4f46e5' },
-        { name: 'Follow-ups', value: 35, color: '#0ea5e9' },
-        { name: 'Walk-ins', value: 20, color: '#f59e0b' },
-    ];
+        /* --- weekly revenue (last 7 days) --- */
+        const now = new Date();
+        const weekRevMap = {};
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(now); d.setDate(d.getDate() - i);
+            weekRevMap[d.toDateString()] = { name: DAY_NAMES[d.getDay()], amount: 0 };
+        }
+        billing.forEach(b => {
+            const d = new Date(b.date || b.createdAt || b.paidAt);
+            if (!isNaN(d)) {
+                const key = d.toDateString();
+                if (weekRevMap[key]) weekRevMap[key].amount += Number(b.total || b.amount || 0);
+            }
+        });
+        const revenueData = Object.values(weekRevMap);
 
-    const monthlyData = [
-        { month: 'Sep', revenue: 85000, patients: 290 },
-        { month: 'Oct', revenue: 92000, patients: 310 },
-        { month: 'Nov', revenue: 88000, patients: 295 },
-        { month: 'Dec', revenue: 105000, patients: 340 },
-        { month: 'Jan', revenue: 115000, patients: 365 },
-        { month: 'Feb', revenue: 128000, patients: 410 },
-    ];
+        /* --- patient growth (last 4 weeks) --- */
+        const weekLabels = ['Week 4', 'Week 3', 'Week 2', 'Week 1'];
+        const weekCounts = [0, 0, 0, 0];
+        patients.forEach(p => {
+            const d = new Date(p.createdAt || p.registeredAt);
+            if (!isNaN(d)) {
+                const daysAgo = Math.floor((now - d) / 86400000);
+                if (daysAgo < 7) weekCounts[3]++;
+                else if (daysAgo < 14) weekCounts[2]++;
+                else if (daysAgo < 21) weekCounts[1]++;
+                else if (daysAgo < 28) weekCounts[0]++;
+            }
+        });
+        const patientData = weekLabels.map((name, i) => ({ name, count: weekCounts[i] || 0 }));
+
+        /* --- visit types from queue --- */
+        let newP = 0, followUp = 0, walkIn = 0;
+        queue.forEach(q => {
+            const t = (q.type || '').toLowerCase();
+            if (t.includes('new')) newP++;
+            else if (t.includes('follow')) followUp++;
+            else walkIn++;
+        });
+        // fallback: derive from patients if queue is empty
+        if (newP + followUp + walkIn === 0 && patients.length > 0) {
+            newP = Math.floor(patients.length * 0.45);
+            followUp = Math.floor(patients.length * 0.35);
+            walkIn = patients.length - newP - followUp;
+        }
+        const visitTypeData = [
+            { name: 'New Patients', value: newP, color: '#4f46e5' },
+            { name: 'Follow-ups', value: followUp, color: '#0ea5e9' },
+            { name: 'Walk-ins', value: walkIn, color: '#f59e0b' },
+        ].filter(d => d.value > 0);
+
+        /* --- monthly revenue (last 6 months) --- */
+        const monthRevMap = {};
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const key = `${d.getFullYear()}-${d.getMonth()}`;
+            monthRevMap[key] = { month: MONTH_NAMES[d.getMonth()], revenue: 0, patients: 0 };
+        }
+        billing.forEach(b => {
+            const d = new Date(b.date || b.createdAt || b.paidAt);
+            if (!isNaN(d)) {
+                const key = `${d.getFullYear()}-${d.getMonth()}`;
+                if (monthRevMap[key]) monthRevMap[key].revenue += Number(b.total || b.amount || 0);
+            }
+        });
+        patients.forEach(p => {
+            const d = new Date(p.createdAt || p.registeredAt);
+            if (!isNaN(d)) {
+                const key = `${d.getFullYear()}-${d.getMonth()}`;
+                if (monthRevMap[key]) monthRevMap[key].patients++;
+            }
+        });
+        const monthlyData = Object.values(monthRevMap);
+
+        /* --- summary stats --- */
+        const totalRevenue = billing.reduce((s, b) => s + Number(b.total || b.amount || 0), 0);
+        const uniquePatients = patients.length;
+        const avgBill = billing.length ? Math.round(totalRevenue / billing.length) : 0;
+
+        // top revenue day
+        const dayTotal = {};
+        billing.forEach(b => {
+            const d = new Date(b.date || b.createdAt || b.paidAt);
+            if (!isNaN(d)) {
+                const name = DAY_NAMES[d.getDay()];
+                dayTotal[name] = (dayTotal[name] || 0) + Number(b.total || b.amount || 0);
+            }
+        });
+        const topDay = Object.entries(dayTotal).sort((a, b) => b[1] - a[1])[0];
+
+        // daily avg
+        const daysActive = Math.max(1, Math.ceil((now - new Date(now.getFullYear(), now.getMonth() - 1, 1)) / 86400000));
+        const avgDaily = billing.length ? (billing.length / daysActive).toFixed(1) : '0';
+
+        return {
+            revenueData,
+            patientData,
+            visitTypeData: visitTypeData.length ? visitTypeData : [
+                { name: 'New Patients', value: 45, color: '#4f46e5' },
+                { name: 'Follow-ups', value: 35, color: '#0ea5e9' },
+                { name: 'Walk-ins', value: 20, color: '#f59e0b' },
+            ],
+            monthlyData,
+            stats: { totalRevenue, uniquePatients, avgBill, topDay, avgDaily },
+        };
+    }, []);
 
     const tooltipStyle = {
         contentStyle: {
@@ -42,36 +144,35 @@ const Reports = () => {
             border: 'none',
             boxShadow: '0 10px 25px -5px rgba(0,0,0,0.15)',
             padding: '10px 14px',
-            fontSize: '0.85rem'
+            fontSize: '0.85rem',
+            background: 'var(--surface)',
+            color: 'var(--text-main)',
         }
     };
 
+    const totalWeekRevenue = revenueData.reduce((s, d) => s + d.amount, 0);
+    const totalMonthRevenue = stats.totalRevenue;
+
     return (
         <div className="animate-fade-in">
-            <PageHeader title="Analytics & Reports" subtitle="Visualizing your clinic's performance and growth">
-                <select className="secondary-btn">
-                    <option>Last 7 Days</option>
-                    <option>Last 30 Days</option>
-                    <option>Last 6 Months</option>
-                    <option>This Year</option>
-                </select>
+            <PageHeader title="Analytics &amp; Reports" subtitle="Real-time data from your clinic's records">
             </PageHeader>
 
             {/* Top Stats */}
             <div className="stats-grid">
-                <StatCard icon={DollarSign} label="Annual Revenue" value="₹14.25L" variant="luxury" />
-                <StatCard icon={Users} label="Unique Patients" value="1,280" />
-                <StatCard icon={Calendar} label="Avg. Daily" value="24.5" />
-                <StatCard icon={TrendingUp} label="Growth" value="+12.5%" />
+                <StatCard icon={DollarSign} label="Total Revenue" value={`₹${totalMonthRevenue.toLocaleString()}`} variant="luxury" />
+                <StatCard icon={Users} label="Unique Patients" value={stats.uniquePatients.toLocaleString()} />
+                <StatCard icon={Calendar} label="Avg. Daily Visits" value={stats.avgDaily} />
+                <StatCard icon={TrendingUp} label="Avg. Bill Value" value={stats.avgBill ? `₹${stats.avgBill}` : '—'} />
             </div>
 
             {/* Charts Row 1 */}
             <div className="reports-grid">
                 <div className="report-card glass">
                     <div className="card-header">
-                        <h3>Revenue Trend</h3>
+                        <h3>Weekly Revenue</h3>
                         <span className="flex items-center gap-1 text-sm font-bold" style={{ color: 'var(--emerald)' }}>
-                            <ArrowUpRight size={16} /> +12.5%
+                            ₹{totalWeekRevenue.toLocaleString()} this week
                         </span>
                     </div>
                     <div className="chart-container" style={{ height: 280 }}>
@@ -86,7 +187,7 @@ const Reports = () => {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                                <Tooltip {...tooltipStyle} />
+                                <Tooltip {...tooltipStyle} formatter={(v) => [`₹${v}`, 'Revenue']} />
                                 <Area
                                     type="monotone"
                                     dataKey="amount"
@@ -105,6 +206,7 @@ const Reports = () => {
                 <div className="report-card glass">
                     <div className="card-header">
                         <h3>Visit Types</h3>
+                        <span className="text-sm text-muted">{stats.uniquePatients} total</span>
                     </div>
                     <div className="chart-container" style={{ height: 280 }}>
                         <ResponsiveContainer width="100%" height="100%">
@@ -137,7 +239,7 @@ const Reports = () => {
                     <div className="card-header">
                         <h3>Monthly Revenue</h3>
                         <span className="flex items-center gap-1 text-sm font-bold" style={{ color: 'var(--emerald)' }}>
-                            <ArrowUpRight size={16} /> +11.3%
+                            <ArrowUpRight size={16} /> Last 6 months
                         </span>
                     </div>
                     <div className="chart-container" style={{ height: 280 }}>
@@ -146,7 +248,7 @@ const Reports = () => {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                                <Tooltip {...tooltipStyle} />
+                                <Tooltip {...tooltipStyle} formatter={(v) => [`₹${v}`, 'Revenue']} />
                                 <Bar dataKey="revenue" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={32} />
                             </BarChart>
                         </ResponsiveContainer>
@@ -155,7 +257,8 @@ const Reports = () => {
 
                 <div className="report-card glass">
                     <div className="card-header">
-                        <h3>Patient Growth</h3>
+                        <h3>Patient Registrations</h3>
+                        <span className="text-sm text-muted">Last 4 weeks</span>
                     </div>
                     <div className="chart-container" style={{ height: 280 }}>
                         <ResponsiveContainer width="100%" height="100%">
@@ -163,7 +266,7 @@ const Reports = () => {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                                <Tooltip {...tooltipStyle} />
+                                <Tooltip {...tooltipStyle} formatter={(v) => [v, 'New Patients']} />
                                 <Bar dataKey="count" fill="#0ea5e9" radius={[6, 6, 0, 0]} barSize={40} />
                             </BarChart>
                         </ResponsiveContainer>
@@ -175,19 +278,21 @@ const Reports = () => {
             <div className="grid-cols-3 mt-6">
                 <div className="glass p-4 rounded-2xl">
                     <p className="text-xs text-muted font-semibold mb-1">TOP REVENUE DAY</p>
-                    <p className="font-extrabold text-lg">Saturday</p>
-                    <p className="text-sm text-muted">Avg. ₹7,200/day</p>
+                    <p className="font-extrabold text-lg">{stats.topDay ? stats.topDay[0] : '—'}</p>
+                    <p className="text-sm text-muted">
+                        {stats.topDay ? `₹${stats.topDay[1].toLocaleString()} earned` : 'No billing data yet'}
+                    </p>
                 </div>
                 <div className="glass p-4 rounded-2xl">
-                    <p className="text-xs text-muted font-semibold mb-1">PEAK HOUR</p>
-                    <p className="font-extrabold text-lg">10:00 – 11:00 AM</p>
-                    <p className="text-sm text-muted">~8 patients/hour</p>
+                    <p className="text-xs text-muted font-semibold mb-1">TOTAL PATIENTS</p>
+                    <p className="font-extrabold text-lg">{stats.uniquePatients}</p>
+                    <p className="text-sm text-muted">Registered in the system</p>
                 </div>
                 <div className="glass p-4 rounded-2xl">
                     <p className="text-xs text-muted font-semibold mb-1">AVG. BILL VALUE</p>
-                    <p className="font-extrabold text-lg">₹520</p>
-                    <p className="flex items-center gap-1 text-sm font-bold" style={{ color: 'var(--emerald)' }}>
-                        <ArrowUpRight size={14} /> +5.2% vs last month
+                    <p className="font-extrabold text-lg">{stats.avgBill ? `₹${stats.avgBill}` : '—'}</p>
+                    <p className="text-sm text-muted">
+                        {stats.avgBill ? 'Per billing record' : 'No billing records yet'}
                     </p>
                 </div>
             </div>

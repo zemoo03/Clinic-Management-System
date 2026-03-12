@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
     Search, Plus, Trash2, FileText, Share2, Printer, Pill, ArrowLeft, Stethoscope,
     PenTool, ChevronDown, ChevronUp, Activity, Heart, Thermometer, Scale,
-    TestTubes, Send, CheckCircle2, Syringe
+    TestTubes, Send, CheckCircle2, Syringe, ScanLine
 } from 'lucide-react';
 import StylusPad from '../components/StylusPad';
 import usePatients from '../hooks/usePatients';

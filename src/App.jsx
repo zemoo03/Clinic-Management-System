@@ -1,12 +1,13 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import {
-    LayoutDashboard, Users, Calendar, ClipboardList, Wallet, BarChart3,
+    LayoutDashboard, Users, Calendar, Wallet, BarChart3,
     Settings, LogOut, Stethoscope, UserCog, Shield, Pill, Package, FileText,
-    Syringe, Apple, ScanLine, FolderOpen, Heart, User
+    Syringe, Apple, ScanLine, Heart, User, Link2
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ToastContainer } from './components/Toast';
+import { applySettings, loadSettings } from './pages/Settings';
 
 // Pages — Clinic
 import Dashboard from './pages/Dashboard';
@@ -20,6 +21,10 @@ import IndoorDispensary from './pages/IndoorDispensary';
 import OutdoorDispensary from './pages/OutdoorDispensary';
 import DietTemplates from './pages/DietTemplates';
 import DocumentScanner from './pages/DocumentScanner';
+import Prescriptions from './pages/Prescriptions';
+import Inventory from './pages/Inventory';
+import LinkedEntities from './pages/LinkedEntities';
+import PharmacyDashboard from './pages/PharmacyDashboard';
 
 import PatientDashboard from './pages/PatientDashboard';
 
@@ -42,10 +47,13 @@ const DoctorSidebar = () => {
         { path: '/outdoor-dispensary', icon: Pill, label: 'Outdoor Dispensary' },
         { path: '/diet-templates', icon: Apple, label: 'Diet & Homecare' },
         { path: '/documents', icon: ScanLine, label: 'Document Scanner' },
+        { path: '/inventory', icon: Package, label: 'Inventory' },
+        { path: '/prescriptions', icon: FileText, label: 'Prescriptions' },
     ];
 
     const mgmtItems = [
         { path: '/reports', icon: BarChart3, label: 'Reports' },
+        { path: '/linked-entities', icon: Link2, label: 'Linked Entities' },
         { path: '/settings', icon: Settings, label: 'Settings' },
     ];
 
@@ -107,10 +115,14 @@ const AssistantSidebar = () => {
         { path: '/indoor-dispensary', icon: Syringe, label: 'Indoor Dispensary' },
         { path: '/outdoor-dispensary', icon: Pill, label: 'Outdoor Dispensary' },
         { path: '/documents', icon: ScanLine, label: 'Document Scanner' },
+        { path: '/inventory', icon: Package, label: 'Inventory' },
+        { path: '/prescriptions', icon: FileText, label: 'Prescriptions' },
+        { path: '/pharmacy', icon: Pill, label: 'Pharmacy' },
     ];
 
     const mgmtItems = [
         { path: '/reports', icon: BarChart3, label: 'Reports' },
+        { path: '/linked-entities', icon: Link2, label: 'Linked Entities' },
         { path: '/settings', icon: Settings, label: 'Settings' },
     ];
 
@@ -606,13 +618,19 @@ const AppRoutes = () => {
                 </ProtectedLayout>
             } />
 
+            {/* Shared: Inventory & Prescriptions (Doctor + Assistant) */}
+            <Route path="/inventory" element={<ProtectedLayout><Inventory /></ProtectedLayout>} />
+            <Route path="/prescriptions" element={<ProtectedLayout><Prescriptions /></ProtectedLayout>} />
+            <Route path="/linked-entities" element={<ProtectedLayout><LinkedEntities /></ProtectedLayout>} />
+            <Route path="/pharmacy" element={<ProtectedLayout><PharmacyDashboard /></ProtectedLayout>} />
+
             <Route path="*" element={<Navigate to="/" />} />
         </Routes>
     );
 };
 
 function App() {
-    // One-time migration to force 'Dr. Sharma' to 'Dr. Payal Patel' in browser storage without clearing cache
+    // One-time migration + apply persisted settings on startup
     useEffect(() => {
         ['scms_entities', 'scms_user', 'scms_patients', 'scms_queue', 'store_prescriptions', 'store_inventory'].forEach(key => {
             const data = localStorage.getItem(key);
@@ -620,6 +638,8 @@ function App() {
                 localStorage.setItem(key, data.replace(/Dr\. Sharma/g, 'Dr. Payal Patel'));
             }
         });
+        // Apply persisted appearance settings
+        applySettings(loadSettings());
     }, []);
 
     return (
