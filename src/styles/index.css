@@ -1572,9 +1572,15 @@ nav {
 }
 
 .login-card {
+    padding: 2.5rem;
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-xl);
     width: 100%;
     max-width: 400px;
     text-align: center;
+    background: var(--surface);
+    position: relative;
+    z-index: 1;
 }
 
 .login-card h2 {
@@ -2339,7 +2345,6 @@ nav {
 
     .login-wrapper {
         margin: 1rem;
-        border-radius: var(--radius-xl);
         min-height: auto;
     }
 
