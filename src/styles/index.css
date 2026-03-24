@@ -247,6 +247,12 @@ textarea {
     color: inherit;
 }
 
+/* Hide MS Edge default password reveal icon */
+input::-ms-reveal,
+input::-ms-clear {
+    display: none;
+}
+
 img {
     max-width: 100%;
     display: block;

@@ -3,7 +3,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import {
     LayoutDashboard, Users, Calendar, Wallet, BarChart3,
     Settings, LogOut, Stethoscope, UserCog, Shield, Pill, Package, FileText,
-    Syringe, Apple, ScanLine, Heart, User, Link2, Smartphone, Download
+    Syringe, Apple, ScanLine, Heart, User, Link2, Smartphone, Download,
+    Eye, EyeOff, Moon, Sun
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ToastContainer } from './components/Toast';
@@ -310,9 +311,30 @@ const Login = () => {
     const [selectedEntityId, setSelectedEntityId] = useState(entities[0]?.id || '');
     const [userId, setUserId] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isPatientLogin, setIsPatientLogin] = useState(false);
+
+    // Theme state
+    const [isDark, setIsDark] = useState(() => {
+        try {
+            const saved = JSON.parse(localStorage.getItem('scms_settings')) || {};
+            return saved.theme === 'dark';
+        } catch { return false; }
+    });
+
+    const toggleTheme = () => {
+        const newDark = !isDark;
+        setIsDark(newDark);
+        try {
+            const saved = JSON.parse(localStorage.getItem('scms_settings')) || {};
+            saved.theme = newDark ? 'dark' : 'light';
+            localStorage.setItem('scms_settings', JSON.stringify(saved));
+        } catch {}
+        if (newDark) document.documentElement.setAttribute('data-theme', 'dark');
+        else document.documentElement.removeAttribute('data-theme');
+    };
 
     // Registration modal state
     const [showRegister, setShowRegister] = useState(false);
@@ -399,8 +421,11 @@ const Login = () => {
 
     return (
         <div className="login-container">
-            {/* Download App Action */}
-            <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', zIndex: 50 }}>
+            {/* Top Right Actions */}
+            <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', zIndex: 50, display: 'flex', gap: '0.8rem' }}>
+                <button className="secondary-btn" onClick={toggleTheme} style={{ padding: '0.4rem 0.6rem' }} title="Toggle Theme">
+                    {isDark ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
                 <button className="secondary-btn" onClick={() => alert("Downloading Mobile App...")} style={{ gap: '0.4rem' }}>
                     <Smartphone size={16} /> <span className="hidden-mobile">Download App</span> <Download size={14} className="visible-mobile" />
                 </button>
@@ -484,7 +509,11 @@ const Login = () => {
             )}
 
             {/* ── Login Split Layout ── */}
-            <div className="login-wrapper animate-fade-in">
+            <div className="login-wrapper animate-fade-in" style={{ 
+                boxShadow: isDark ? '0 15px 50px rgba(0,0,0,0.6)' : '0 15px 50px rgba(0,0,0,0.1)', 
+                border: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)',
+                transform: 'scale(1.02)'
+            }}>
                 
                 {/* ── Branding Side ── */}
                 <div className="login-branding">
@@ -558,11 +587,27 @@ const Login = () => {
                                     onChange={(e) => setUserId(e.target.value)}
                                     placeholder={isPatientLogin ? "Enter mobile number or PAT001" : "Enter your User ID"} autoComplete="username" />
                             </div>
-                            <div className="form-group text-left">
-                                <label>{isPatientLogin ? 'Patient ID (Password)' : 'Password'}</label>
-                                <input required type="password" value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder={isPatientLogin ? "e.g. PAT001" : "Enter your password"} autoComplete="current-password" />
+                            <div className="form-group text-left" style={{ marginBottom: '1rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                                    <label style={{ margin: 0 }}>{isPatientLogin ? 'Patient ID (Password)' : 'Password'}</label>
+                                    <span 
+                                        className="text-xs" 
+                                        style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}
+                                        onClick={() => alert("Please contact the clinic administrator to reset your password.")}
+                                    >
+                                        Forgot Password?
+                                    </span>
+                                </div>
+                                <div style={{ position: 'relative' }}>
+                                    <input required type={showPassword ? "text" : "password"} value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder={isPatientLogin ? "e.g. PAT001" : "Enter your password"} autoComplete="current-password" 
+                                        style={{ paddingRight: '2.5rem', width: '100%' }} />
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} 
+                                        style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
                             </div>
 
                             {error && (
