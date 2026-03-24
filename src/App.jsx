@@ -9,6 +9,7 @@ import {
 import { useEffect, useState } from 'react';
 import { ToastContainer } from './components/Toast';
 import { applySettings, loadSettings } from './pages/Settings';
+import { Save } from 'lucide-react';
 
 // Pages — Clinic
 import Dashboard from './pages/Dashboard';
@@ -252,10 +253,11 @@ const BottomNav = () => {
    PROTECTED LAYOUT
    ═══════════════════════════════ */
 const ProtectedLayout = ({ children }) => {
-    const { user, isDoctor, isPatient } = useAuth();
+    const { user, isDoctor, isPatient, isDevAdmin } = useAuth();
     if (!user) return <Navigate to="/login" />;
 
     const getSidebar = () => {
+        if (isDevAdmin) return <DoctorSidebar />; // Admin can see all
         if (isPatient) return <PatientSidebar />;
         if (isDoctor) return <DoctorSidebar />;
         return <AssistantSidebar />;
@@ -289,9 +291,15 @@ const seedDefaults = () => {
                 doctor: 'Dr. Payal Patel', specialty: 'General Medicine',
                 users: [
                     { role: 'doctor', userId: 'doc01', password: 'doc123', displayName: 'Dr. Payal Patel' },
-                    { role: 'assistant', userId: 'asst01', password: 'asst123', displayName: 'Receptionist' },
+                    { role: 'assistant', userId: 'asst01', password: 'asst01', displayName: 'Receptionist' },
                 ],
                 createdAt: new Date().toISOString(),
+            },
+            {
+                id: 'SYSTEM', type: 'system', name: 'SmartClinic System',
+                users: [
+                    { role: 'dev', userId: 'developer', password: 'dev_admin_2026', displayName: 'System Developer' }
+                ]
             }
         ];
         saveEntities(defaults);
@@ -315,6 +323,8 @@ const Login = () => {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [loginTab, setLoginTab] = useState('doctor'); // 'doctor', 'assistant', or 'patient'
+    const [rememberDevice, setRememberDevice] = useState(localStorage.getItem('scms_remember') === 'true');
+    const [isDevMode, setIsDevMode] = useState(false);
 
     // Theme state
     const [isDark, setIsDark] = useState(() => {
@@ -348,11 +358,28 @@ const Login = () => {
     if (user) return <Navigate to="/" />;
 
     const selectedEntity = entities.find(e => e.id === selectedEntityId);
-    const clinics = entities.filter(e => e.type === 'clinic');
+    
+    // Privacy: Only show the registered clinic for this device, unless Dev
+    const registeredClinicId = localStorage.getItem('scms_registered_clinic');
+    const clinics = entities.filter(e => {
+        if (e.id === 'SYSTEM') return true;
+        if (!registeredClinicId || isDevMode) return e.type === 'clinic';
+        return e.id === registeredClinicId;
+    });
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
+        
+        // Developer Trapdoor: check for dev user id
+        if (userId.trim() === 'developer' && !isDevMode) {
+            setIsDevMode(true);
+            setLoginTab('doctor');
+            setSelectedEntityId('SYSTEM');
+            setError('Developer Mode Activated. Enter system password.');
+            return;
+        }
+
         if (loginTab !== 'patient' && !selectedEntityId) { setError('Please select a clinic.'); return; }
         setIsLoading(true);
 
@@ -377,14 +404,23 @@ const Login = () => {
                 }
             } else {
                 const matchedUser = selectedEntity.users.find(
-                    u => u.userId === userId.trim() && u.password === password && u.role === loginTab
+                    u => u.userId === userId.trim() && u.password === password && (u.role === loginTab || u.role === 'dev')
                 );
 
                 if (matchedUser) {
-                    await login(matchedUser.displayName, matchedUser.role, selectedEntity.id);
+                    if (rememberDevice) {
+                        localStorage.setItem('scms_remember', 'true');
+                        if (selectedEntity.id !== 'SYSTEM') {
+                            localStorage.setItem('scms_registered_clinic', selectedEntity.id);
+                        }
+                    } else {
+                        localStorage.removeItem('scms_remember');
+                        localStorage.removeItem('scms_registered_clinic');
+                    }
+                    await login(matchedUser.displayName, matchedUser.role === 'dev' ? 'dev' : matchedUser.role, selectedEntity.id);
                     navigate('/');
                 } else {
-                    setError('Invalid User ID or Password.');
+                    setError('Invalid Credentials.');
                 }
             }
         } catch (err) {
@@ -616,6 +652,19 @@ const Login = () => {
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                             </div>
+                        </div>
+
+                        <div className="form-group flex items-center gap-2 mb-4">
+                            <input 
+                                type="checkbox" 
+                                id="rememberDevice" 
+                                checked={rememberDevice} 
+                                onChange={(e) => setRememberDevice(e.target.checked)}
+                                style={{ width: 'auto', margin: 0 }}
+                            />
+                            <label htmlFor="rememberDevice" style={{ margin: 0, textTransform: 'none', cursor: 'pointer' }}>
+                                Register & Remember this Device
+                            </label>
                         </div>
 
                         {error && <div className="login-error-msg">{error}</div>}

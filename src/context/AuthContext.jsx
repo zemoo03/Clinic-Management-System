@@ -46,6 +46,7 @@ export const AuthProvider = ({ children }) => {
     const isDoctor = user?.role === 'doctor';
     const isAssistant = user?.role === 'assistant';
     const isPatient = user?.role === 'patient';
+    const isDevAdmin = user?.role === 'dev';
 
     const value = {
         user,
@@ -55,6 +56,7 @@ export const AuthProvider = ({ children }) => {
         isDoctor,
         isAssistant,
         isPatient,
+        isDevAdmin,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
