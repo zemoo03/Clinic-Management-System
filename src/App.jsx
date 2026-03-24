@@ -314,7 +314,7 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [isPatientLogin, setIsPatientLogin] = useState(false);
+    const [loginTab, setLoginTab] = useState('doctor'); // 'doctor', 'assistant', or 'patient'
 
     // Theme state
     const [isDark, setIsDark] = useState(() => {
@@ -353,47 +353,45 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
-        if (!selectedEntity && !isPatientLogin) { setError('Please select a clinic.'); return; }
+        if (loginTab !== 'patient' && !selectedEntityId) { setError('Please select a clinic.'); return; }
         setIsLoading(true);
 
-        if (isPatientLogin) {
-            // Patient login logic
-            const patientsList = JSON.parse(localStorage.getItem('patients') || '[]');
-            // Try authenticating with mobile as User ID and specific ID as password
-            const matchedPatient = patientsList.find(
-                p => (p.mobile === userId.trim() || p.id === userId.trim()) && p.id === password.trim()
-            );
+        try {
+            if (loginTab === 'patient') {
+                const patientsList = JSON.parse(localStorage.getItem('patients') || '[]');
+                const matchedPatient = patientsList.find(
+                    p => (p.mobile === userId.trim() || p.id === userId.trim()) && p.id === password.trim()
+                );
 
-            if (matchedPatient) {
-                // login as patient
-                const patientWithRole = { ...matchedPatient, defaultName: matchedPatient.name, idPrefix: matchedPatient.id };
-                await login(matchedPatient.name, 'patient', selectedEntityId || 'CLINIC001');
-
-                // Override user context to pass full patient ID etc if needed via localStorage directly since AuthContext doesn't handle full patient object inside user, or we can just let PatientDashboard fetch the patient by ID. Wait, AuthContext sets user id to `cfg.idPrefix` which defaults to `pat_001` for patients! We must fix AuthContext login so it accepts overriding id! Actually, I'll manually modify `scms_user` after `login` returns.
-                const userObj = JSON.parse(localStorage.getItem('scms_user'));
-                userObj.id = matchedPatient.id;
-                userObj.name = matchedPatient.name;
-                localStorage.setItem('scms_user', JSON.stringify(userObj));
-                // We also reload to make sure AuthContext picks up the new user Obj.
-                window.location.href = '/';
-                return;
+                if (matchedPatient) {
+                    await login(matchedPatient.name, 'patient', selectedEntityId || 'CLINIC001');
+                    // Ensure the core name is set correctly
+                    const userObj = JSON.parse(localStorage.getItem('scms_user'));
+                    userObj.id = matchedPatient.id;
+                    userObj.name = matchedPatient.name;
+                    localStorage.setItem('scms_user', JSON.stringify(userObj));
+                    window.location.href = '/';
+                    return;
+                } else {
+                    setError('Invalid Patient ID or Mobile Number.');
+                }
             } else {
-                setError('Invalid Patient ID or Mobile Number.');
-            }
-        } else {
-            // Staff login logic
-            const matchedUser = selectedEntity.users.find(
-                u => u.userId === userId.trim() && u.password === password
-            );
+                const matchedUser = selectedEntity.users.find(
+                    u => u.userId === userId.trim() && u.password === password && u.role === loginTab
+                );
 
-            if (matchedUser) {
-                await login(matchedUser.displayName, matchedUser.role, selectedEntity.id);
-                navigate('/');
-            } else {
-                setError('Invalid User ID or Password.');
+                if (matchedUser) {
+                    await login(matchedUser.displayName, matchedUser.role, selectedEntity.id);
+                    navigate('/');
+                } else {
+                    setError('Invalid User ID or Password.');
+                }
             }
+        } catch (err) {
+            setError('An error occurred during sign-in.');
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     const handleRegister = (e) => {
@@ -422,14 +420,12 @@ const Login = () => {
     return (
         <div className="login-container">
             {/* Top Right Actions */}
-            <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', zIndex: 50, display: 'flex', gap: '0.8rem' }}>
-                <button className="secondary-btn" onClick={toggleTheme} style={{ padding: '0.4rem 0.6rem' }} title="Toggle Theme">
-                    {isDark ? <Sun size={18} /> : <Moon size={18} />}
-                </button>
-                <button className="secondary-btn" onClick={() => alert("Downloading Mobile App...")} style={{ gap: '0.4rem' }}>
-                    <Smartphone size={16} /> <span className="hidden-mobile">Download App</span> <Download size={14} className="visible-mobile" />
+            <div className="login-actions-top">
+                <button className="theme-toggle-btn" onClick={toggleTheme} title="Toggle Theme">
+                    {isDark ? <Sun size={20} /> : <Moon size={20} />}
                 </button>
             </div>
+
             {/* ── Registration Modal ── */}
             {showRegister && (
                 <div className="modal-overlay" onClick={() => setShowRegister(false)}>
@@ -508,129 +504,145 @@ const Login = () => {
                 </div>
             )}
 
-            {/* ── Login Split Layout ── */}
-            <div className="login-wrapper animate-fade-in" style={{ 
-                boxShadow: isDark ? '0 15px 50px rgba(0,0,0,0.6)' : '0 15px 50px rgba(0,0,0,0.1)', 
-                border: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)',
-                transform: 'scale(1.02)'
-            }}>
-                
-                {/* ── Branding Side ── */}
-                <div className="login-branding">
-                    <div className="branding-icon-container">
-                        <Stethoscope size={64} className="branding-icon" />
+            <div className="login-split-card">
+                {/* ── Visual Side ── */}
+                <div className="login-visual-panel">
+                    <div className="visual-overlay"></div>
+                    <img 
+                        src="https://images.unsplash.com/photo-1631217818242-aa0a703c726d?q=80&w=2070&auto=format&fit=crop" 
+                        alt="Medical Workspace" 
+                        className="visual-image" 
+                    />
+                    <div className="visual-content">
+                        <div className="visual-logo">
+                            <Stethoscope size={32} />
+                            <span>SmartClinic</span>
+                        </div>
+                        <h2>The Intelligent Core <br/> of your Medical Practice.</h2>
+                        <p>Streamline patient care, manage records effortlessly, and focus on what matters most—healing.</p>
+                        
+                        <div className="visual-features">
+                            <div className="v-feature">
+                                <Shield size={18} />
+                                <span>HIPAA Compliant Security</span>
+                            </div>
+                            <div className="v-feature">
+                                <LayoutDashboard size={18} />
+                                <span>Intelligent Dashboards</span>
+                            </div>
+                        </div>
                     </div>
-                    <h1>SmartClinic</h1>
-                    <p>Advanced digital healthcare solution for smarter clinic management and patient care.</p>
                 </div>
 
                 {/* ── Form Side ── */}
-                <div className="login-form-area">
-                    <div className="login-card">
-                        <div className="logo-container centered mb-6">
-                            <div className="logo-icon large" style={{ background: 'var(--primary)', color: 'white', marginBottom: '0.5rem' }}>SC</div>
-                            <h2 className="mt-2 text-xl font-bold">Welcome Back</h2>
-                            <p className="login-subtitle m-0 text-sm text-muted">Please sign in to continue</p>
-                        </div>
+                <div className="login-form-panel">
+                    <div className="login-form-header">
+                        <h1>Welcome Back</h1>
+                        <p>Access your workspace as a doctor, staff, or patient</p>
+                    </div>
 
-                        <div className="flex gap-2 mb-4">
-                            <button type="button" className={`secondary-btn ${!isPatientLogin ? 'active' : ''}`} style={{ flex: 1, fontSize: '0.82rem', gap: '0.4rem', borderBottom: !isPatientLogin ? '2px solid var(--primary)' : 'none' }}
-                                onClick={() => { setIsPatientLogin(false); setError(''); }}>
-                                <Stethoscope size={14} /> Staff Login
-                            </button>
-                            <button type="button" className={`secondary-btn ${isPatientLogin ? 'active' : ''}`} style={{ flex: 1, fontSize: '0.82rem', gap: '0.4rem', borderBottom: isPatientLogin ? '2px solid var(--primary)' : 'none' }}
-                                onClick={() => { setIsPatientLogin(true); setError(''); }}>
-                                <User size={14} /> Patient Login
-                            </button>
-                        </div>
+                    <div className="login-type-switch">
+                        <button 
+                            className={`switch-btn ${loginTab === 'doctor' ? 'active' : ''}`}
+                            onClick={() => { setLoginTab('doctor'); setError(''); }}
+                        >
+                            <Stethoscope size={18} />
+                            <span>Doctor</span>
+                        </button>
+                        <button 
+                            className={`switch-btn ${loginTab === 'assistant' ? 'active' : ''}`}
+                            onClick={() => { setLoginTab('assistant'); setError(''); }}
+                        >
+                            <UserCog size={18} />
+                            <span>Staff</span>
+                        </button>
+                        <button 
+                            className={`switch-btn ${loginTab === 'patient' ? 'active' : ''}`}
+                            onClick={() => { setLoginTab('patient'); setError(''); }}
+                        >
+                            <Users size={18} />
+                            <span>Patient</span>
+                        </button>
+                    </div>
 
-                        {!isPatientLogin && (
-                            <div className="flex gap-2 mb-4">
-                                <button type="button" className="secondary-btn" style={{ flex: 1, fontSize: '0.82rem', gap: '0.4rem' }}
-                                    onClick={() => setShowRegister(true)}>
-                                    <Stethoscope size={14} /> Add Clinic
-                                </button>
+                    <form className="modern-login-form" onSubmit={handleLogin}>
+                        {loginTab !== 'patient' && (
+                            <div className="form-group">
+                                <label>Selected Clinic</label>
+                                <div className="select-wrapper">
+                                    <select
+                                        value={selectedEntityId}
+                                        onChange={e => { setSelectedEntityId(e.target.value); setError(''); }}
+                                    >
+                                        {clinics.map(c => <option key={c.id} value={c.id}>{c.name} — {c.id}</option>)}
+                                    </select>
+                                </div>
                             </div>
                         )}
 
-                        <form onSubmit={handleLogin}>
-                            {!isPatientLogin && (
-                                <>
-                                    {/* Entity Selector */}
-                                    <div className="form-group text-left">
-                                        <label>Select Clinic</label>
-                                        <select
-                                            value={selectedEntityId}
-                                            onChange={e => { setSelectedEntityId(e.target.value); setError(''); }}
-                                            style={{ width: '100%' }}
-                                        >
-                                            {clinics.map(c => <option key={c.id} value={c.id}>{c.name} ({c.id})</option>)}
-                                        </select>
-                                    </div>
-
-                                    {/* Show which roles exist for this entity */}
-                                    {selectedEntity && (
-                                        <div className="flex gap-2 mb-3 flex-wrap">
-                                            {selectedEntity.users.map(u => (
-                                                <span key={u.role} className={`status-badge ${u.role === 'doctor' ? 'status-active' : 'status-waiting'}`}>
-                                                    {u.role === 'doctor' ? '👨‍⚕️' : '🧑‍💼'} {u.role}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
-                                </>
-                            )}
-
-                            <div className="form-group text-left">
-                                <label>{isPatientLogin ? 'Mobile Number / Patient ID' : 'User ID'}</label>
-                                <input required type="text" value={userId}
+                        <div className="form-group">
+                            <label>{loginTab === 'patient' ? 'Mobile / Patient ID' : `${loginTab.charAt(0).toUpperCase() + loginTab.slice(1)} User ID`}</label>
+                            <div className="input-with-icon">
+                                <User className="input-icon" size={18} />
+                                <input 
+                                    required 
+                                    type="text" 
+                                    value={userId}
                                     onChange={(e) => setUserId(e.target.value)}
-                                    placeholder={isPatientLogin ? "Enter mobile number or PAT001" : "Enter your User ID"} autoComplete="username" />
+                                    placeholder={loginTab === 'patient' ? "e.g. 9876543210" : `Your ${loginTab} unique ID`}
+                                />
                             </div>
-                            <div className="form-group text-left" style={{ marginBottom: '1rem' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                                    <label style={{ margin: 0 }}>{isPatientLogin ? 'Patient ID (Password)' : 'Password'}</label>
-                                    <span 
-                                        className="text-xs" 
-                                        style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}
-                                        onClick={() => alert("Please contact the clinic administrator to reset your password.")}
-                                    >
-                                        Forgot Password?
-                                    </span>
-                                </div>
-                                <div style={{ position: 'relative' }}>
-                                    <input required type={showPassword ? "text" : "password"} value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder={isPatientLogin ? "e.g. PAT001" : "Enter your password"} autoComplete="current-password" 
-                                        style={{ paddingRight: '2.5rem', width: '100%' }} />
-                                    <button type="button" onClick={() => setShowPassword(!showPassword)} 
-                                        style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
-                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                    </button>
-                                </div>
-                            </div>
+                        </div>
 
-                            {error && (
-                                <p style={{ color: 'var(--accent)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.75rem', textAlign: 'center' }}>
-                                    {error}
-                                </p>
+                        <div className="form-group">
+                            <div className="label-row">
+                                <label>Password</label>
+                                <span className="forgot-link">Forgot?</span>
+                            </div>
+                            <div className="input-with-icon">
+                                <Shield className="input-icon" size={18} />
+                                <input 
+                                    required 
+                                    type={showPassword ? "text" : "password"} 
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder={loginTab === 'patient' ? "Enter your ID" : "••••••••"}
+                                />
+                                <button 
+                                    type="button" 
+                                    className="password-toggle"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {error && <div className="login-error-msg">{error}</div>}
+
+                        <button type="submit" className="login-submit-btn" disabled={isLoading}>
+                            {isLoading ? (
+                                <span className="loader-dots">Authenticating</span>
+                            ) : (
+                                <>Sign In to Workspace <LogOut size={18} /></>
                             )}
+                        </button>
 
-                            <button type="submit" className="primary-btn" disabled={isLoading} style={{ width: '100%' }}>
-                                {isLoading ? 'Signing in...' : 'Sign In'}
-                            </button>
-
-                            {/* Default credentials hint */}
-                            <div className="login-info mt-4" style={{ background: 'var(--background)', padding: '0.85rem', borderRadius: 'var(--radius)', textAlign: 'left' }}>
-                                <p className="text-xs font-bold text-muted" style={{ marginBottom: '0.4rem' }}>
-                                    <Shield size={12} style={{ display: 'inline', verticalAlign: 'middle' }} /> Default Demo Credentials
-                                </p>
-                                <p className="text-xs text-muted" style={{ lineHeight: 1.8 }}>
-                                    <strong>SmartClinic →</strong> Doctor: <code>doc01</code>/<code>doc123</code> · Asst: <code>asst01</code>/<code>asst123</code>
-                                </p>
+                        {loginTab !== 'patient' && (
+                            <div className="login-divider">
+                                <span>New Clinic?</span>
+                                <button type="button" onClick={() => setShowRegister(true)} className="register-link">Register Clinic</button>
                             </div>
-                        </form>
-                    </div>
+                        )}
+                        
+                        <div className="demo-credentials-hint">
+                            <p><strong>Demo:</strong> doc01 / doc123 (SmartClinic)</p>
+                        </div>
+                    </form>
+                    
+                    <footer className="login-footer">
+                        &copy; 2026 SmartClinic Labs. All rights reserved.
+                    </footer>
                 </div>
             </div>
         </div>
@@ -708,9 +720,19 @@ function App() {
         applySettings(loadSettings());
     }, []);
 
+    // Scroll to top on route change
+    const ScrollToTop = () => {
+        const { pathname } = useLocation();
+        useEffect(() => {
+            window.scrollTo(0, 0);
+        }, [pathname]);
+        return null;
+    };
+
     return (
         <AuthProvider>
             <Router>
+                <ScrollToTop />
                 <ToastContainer />
                 <AppRoutes />
             </Router>
