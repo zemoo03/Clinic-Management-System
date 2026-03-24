@@ -97,6 +97,30 @@ const PatientDashboard = () => {
                                         </div>
                                     )}
 
+                                    {visit.dietPlan && (
+                                        <div className="md:col-span-2 p-3 bg-emerald/5 rounded-lg border border-emerald/10 mt-2">
+                                            <p className="text-xs text-emerald font-bold uppercase mb-2 flex items-center gap-1">
+                                                <Apple size={14} /> Diet & Homecare Plan: {visit.dietPlan.ageGroup}
+                                            </p>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-muted uppercase">Recommended</p>
+                                                    <p className="text-xs">{visit.dietPlan.recommended.map(r => r.item).join(', ')}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-muted uppercase">Avoid</p>
+                                                    <p className="text-xs text-accent-dark">{visit.dietPlan.avoid.map(a => a.item).join(', ')}</p>
+                                                </div>
+                                            </div>
+                                            {visit.dietPlan.homecare?.length > 0 && (
+                                                <div className="mt-2 pt-2 border-t border-emerald/10">
+                                                    <p className="text-[10px] font-bold text-muted uppercase">Homecare Tips</p>
+                                                    <p className="text-xs">{visit.dietPlan.homecare.map(h => `${h.icon} ${h.tip}`).join(' • ')}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
                                     {visit.prescriptionUrl && (
                                         <div className="md:col-span-2 mt-2">
                                             <a href={visit.prescriptionUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-3 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark transition-colors">

@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Apple, Baby, Heart, AlertTriangle, Copy, Download, Printer,
     ChevronDown, ChevronUp, Search, BookOpen, Utensils, Ban, CheckCircle2,
-    Thermometer, Droplets, Moon
+    Thermometer, Droplets, Moon, Plus, Trash2, Edit3, Save, X
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import SearchBar from '../components/SearchBar';
 import Modal from '../components/Modal';
 import { showToast } from '../components/Toast';
 
-const DIET_TEMPLATES = [
+export const DEFAULT_DIET_TEMPLATES = [
     {
         id: 'dt001',
         ageGroup: 'Infant (0-6 months)',
@@ -97,67 +97,6 @@ const DIET_TEMPLATES = [
             { tip: 'Ensure vaccinations are up to date', icon: '💉' },
         ],
     },
-    {
-        id: 'dt004',
-        ageGroup: 'Child (3-6 years)',
-        ageRange: '3-6y',
-        icon: '👦',
-        color: '#4f46e5',
-        recommended: [
-            { item: 'Milk / Curd / Paneer', details: '2-3 servings for calcium', priority: 'essential' },
-            { item: 'Roti / Rice with dal', details: 'Balanced meals 3 times/day', priority: 'essential' },
-            { item: 'Seasonal fruits', details: '2-3 servings daily', priority: 'essential' },
-            { item: 'Eggs / Chicken / Fish', details: 'Protein source, 3-4 times/week', priority: 'recommended' },
-            { item: 'Green leafy vegetables', details: 'Palak, methi, broccoli', priority: 'recommended' },
-            { item: 'Whole grains (daliya, oats)', details: 'Good for fiber and energy', priority: 'recommended' },
-            { item: 'Sprouts / Chana', details: 'Excellent protein for vegetarians', priority: 'optional' },
-        ],
-        avoid: [
-            { item: 'Junk food (pizza, burgers, fries)', reason: 'Empty calories, poor nutrition' },
-            { item: 'Sugary drinks / Fruit juices', reason: 'Prefer whole fruits instead' },
-            { item: 'Excess sweets / Mithai', reason: 'Risk of obesity and dental issues' },
-            { item: 'Instant noodles (Maggi etc.)', reason: 'High sodium, maida-based' },
-            { item: 'Street food', reason: 'Hygiene concerns, heavy oils' },
-        ],
-        homecare: [
-            { tip: 'Ensure 10-12 hours of sleep', icon: '😴' },
-            { tip: 'Active play outside for 1-2 hours', icon: '⚽' },
-            { tip: 'Read books together for 15-20 min daily', icon: '📚' },
-            { tip: 'Limit gadget screen time to 1 hour/day', icon: '📱' },
-            { tip: 'Teach handwashing, personal hygiene', icon: '🧼' },
-            { tip: 'Regular eye & dental checkups every 6 months', icon: '👁️' },
-        ],
-    },
-    {
-        id: 'dt005',
-        ageGroup: 'Child (6-12 years)',
-        ageRange: '6-12y',
-        icon: '🧑',
-        color: '#0ea5e9',
-        recommended: [
-            { item: 'Balanced meals with all food groups', details: 'Carbs + Protein + Fats + Vitamins', priority: 'essential' },
-            { item: 'Milk / Dairy products', details: 'For bone growth, 2-3 servings', priority: 'essential' },
-            { item: 'Iron-rich foods (spinach, jaggery, dry fruits)', details: 'Prevents anemia', priority: 'recommended' },
-            { item: 'Protein (eggs, pulses, fish, paneer)', details: 'For growth and development', priority: 'recommended' },
-            { item: 'Nuts and seeds', details: 'Almonds, walnuts, flax seeds', priority: 'recommended' },
-            { item: 'Water — 6-8 glasses daily', details: 'Hydration is crucial', priority: 'essential' },
-        ],
-        avoid: [
-            { item: 'Cola / Soft drinks', reason: 'Leads to obesity, tooth decay' },
-            { item: 'Excess bread / Maida products', reason: 'Low nutrition, constipation risk' },
-            { item: 'Skipping breakfast', reason: 'Impacts concentration and energy' },
-            { item: 'Energy drinks', reason: 'High caffeine, not for children' },
-            { item: 'Excessive fried food', reason: 'Increases cholesterol risk' },
-        ],
-        homecare: [
-            { tip: 'Mandatory breakfast before school', icon: '🍳' },
-            { tip: 'Pack nutritious lunch box (roti/rice, sabzi, fruit)', icon: '🍱' },
-            { tip: 'Encourage sports / physical activity', icon: '🏏' },
-            { tip: '9-10 hours of sleep', icon: '😴' },
-            { tip: 'Regular medical checkups', icon: '🏥' },
-            { tip: 'Limit social media / phone usage', icon: '📵' },
-        ],
-    },
 ];
 
 const FEVER_HOMECARE = [
@@ -178,12 +117,31 @@ const GENERAL_HOMECARE = [
 ];
 
 const DietTemplates = () => {
+    const [templates, setTemplates] = useState(() => {
+        const saved = localStorage.getItem('diet_templates');
+        return saved ? JSON.parse(saved) : DEFAULT_DIET_TEMPLATES;
+    });
     const [selectedTemplate, setSelectedTemplate] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [showHomecare, setShowHomecare] = useState(null); // 'fever' | 'general' | null
     const [expandedSection, setExpandedSection] = useState('recommended');
+    const [isEditing, setIsEditing] = useState(false);
+    const [isAdding, setIsAdding] = useState(false);
 
-    const filtered = DIET_TEMPLATES.filter(t =>
+    // Form states for adding/editing
+    const [templateForm, setTemplateForm] = useState({
+        ageGroup: '', ageRange: '', icon: '🍽️', color: '#4f46e5',
+        recommended: [], avoid: [], homecare: []
+    });
+
+    // Helper states for adding items within the form
+    const [newItem, setNewItem] = useState({ type: 'recommended', field1: '', field2: '', priority: 'recommended', icon: '✅' });
+
+    useEffect(() => {
+        localStorage.setItem('diet_templates', JSON.stringify(templates));
+    }, [templates]);
+
+    const filtered = templates.filter(t =>
         t.ageGroup.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -259,10 +217,82 @@ const DietTemplates = () => {
         showToast('Printing diet plan...', 'info');
     };
 
+    const handleAddTemplate = () => {
+        setIsAdding(true);
+        setTemplateForm({
+            ageGroup: '', ageRange: '', icon: '🍽️', color: '#4f46e5',
+            recommended: [], avoid: [], homecare: []
+        });
+    };
+
+    const handleEditTemplate = (template) => {
+        setSelectedTemplate(null);
+        setIsEditing(true);
+        setTemplateForm({ ...template });
+    };
+
+    const handleDeleteTemplate = (id) => {
+        if (window.confirm('Are you sure you want to delete this diet template?')) {
+            setTemplates(templates.filter(t => t.id !== id));
+            showToast('Template deleted', 'info');
+            setSelectedTemplate(null);
+        }
+    };
+
+    const handleSaveTemplate = () => {
+        if (!templateForm.ageGroup) {
+            showToast('Age group name is required', 'error');
+            return;
+        }
+
+        if (isAdding) {
+            const newId = `dt${Date.now()}`;
+            setTemplates([...templates, { ...templateForm, id: newId }]);
+            showToast('Template added successfully', 'success');
+        } else {
+            setTemplates(templates.map(t => t.id === templateForm.id ? templateForm : t));
+            showToast('Template updated successfully', 'success');
+        }
+        setIsAdding(false);
+        setIsEditing(false);
+        setTemplateForm({
+            ageGroup: '', ageRange: '', icon: '🍽️', color: '#4f46e5',
+            recommended: [], avoid: [], homecare: []
+        });
+    };
+
+    const addItemToForm = (section) => {
+        if (!newItem.field1) return;
+        
+        let formattedItem = {};
+        if (section === 'recommended') {
+            formattedItem = { item: newItem.field1, details: newItem.field2, priority: newItem.priority };
+        } else if (section === 'avoid') {
+            formattedItem = { item: newItem.field1, reason: newItem.field2 };
+        } else if (section === 'homecare') {
+            formattedItem = { tip: newItem.field1, icon: newItem.icon };
+        }
+
+        setTemplateForm({
+            ...templateForm,
+            [section]: [...templateForm[section], formattedItem]
+        });
+        setNewItem({ type: section, field1: '', field2: '', priority: 'recommended', icon: '✅' });
+    };
+
+    const removeItemFromForm = (section, index) => {
+        const updatedSection = [...templateForm[section]];
+        updatedSection.splice(index, 1);
+        setTemplateForm({ ...templateForm, [section]: updatedSection });
+    };
+
     return (
         <div className="animate-fade-in">
-            <PageHeader title="Diet Templates & Homecare" subtitle="Pre-built diet plans and homecare advice for children by age group">
+            <PageHeader title="Diet Templates & Homecare" subtitle="Manage diet plans and homecare advice for patients">
                 <div className="flex gap-2">
+                    <button className="primary-btn-sm" onClick={handleAddTemplate}>
+                        <Plus size={14} /> Add Template
+                    </button>
                     <button className="secondary-btn" onClick={() => setShowHomecare('fever')}>
                         <Thermometer size={14} /> Fever Homecare
                     </button>
@@ -285,7 +315,7 @@ const DietTemplates = () => {
                     >
                         <div className="diet-card-header">
                             <span className="diet-icon">{template.icon}</span>
-                            <div>
+                            <div style={{ flex: 1 }}>
                                 <h3 className="font-bold">{template.ageGroup}</h3>
                                 <p className="text-xs text-muted">
                                     {template.recommended.length} foods • {template.avoid.length} restrictions • {template.homecare.length} tips
@@ -308,9 +338,17 @@ const DietTemplates = () => {
                             </div>
                         </div>
 
-                        <button className="primary-btn-sm mt-3" style={{ '--btn-color': template.color }}>
-                            <BookOpen size={14} /> View Full Plan
-                        </button>
+                        <div className="flex gap-2 mt-4">
+                            <button className="primary-btn-sm flex-1" onClick={(e) => { e.stopPropagation(); setSelectedTemplate(template); }} style={{ '--btn-color': template.color }}>
+                                <BookOpen size={14} /> View Plan
+                            </button>
+                            <button className="secondary-btn" onClick={(e) => { e.stopPropagation(); handleEditTemplate(template); }} title="Edit Template">
+                                <Edit3 size={14} /> Edit
+                            </button>
+                            <button className="icon-btn danger" onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(template.id); }} title="Delete Template">
+                                <Trash2 size={14} />
+                            </button>
+                        </div>
                     </div>
                 ))}
             </div>
@@ -381,16 +419,116 @@ const DietTemplates = () => {
                         )}
 
                         {/* Actions */}
-                        <div className="flex gap-3 mt-6">
+                        <div className="flex gap-2 mt-6">
                             <button className="primary-btn flex-1" onClick={() => handlePrintTemplate(selectedTemplate)}>
                                 <Printer size={16} /> Print Plan
                             </button>
                             <button className="secondary-btn flex-1" onClick={() => handleCopyTemplate(selectedTemplate)}>
-                                <Copy size={14} /> Copy Text
+                                <Copy size={14} /> Copy
+                            </button>
+                            <button className="secondary-btn" onClick={() => handleEditTemplate(selectedTemplate)}>
+                                <Edit3 size={14} /> Edit
                             </button>
                         </div>
                     </div>
                 )}
+            </Modal>
+
+            {/* Add / Edit Template Modal */}
+            <Modal
+                isOpen={isAdding || isEditing}
+                onClose={() => { setIsAdding(false); setIsEditing(false); }}
+                title={isAdding ? "✨ Add New Diet Template" : "✏️ Edit Diet Template"}
+                size="lg"
+            >
+                <div className="form-grid mb-4">
+                    <div className="form-group">
+                        <label>Age Group Name *</label>
+                        <input type="text" placeholder="e.g. Newborns" value={templateForm.ageGroup}
+                            onChange={e => setTemplateForm({ ...templateForm, ageGroup: e.target.value })} />
+                    </div>
+                    <div className="form-group">
+                        <label>Age Range</label>
+                        <input type="text" placeholder="e.g. 0-1m" value={templateForm.ageRange}
+                            onChange={e => setTemplateForm({ ...templateForm, ageRange: e.target.value })} />
+                    </div>
+                    <div className="form-group">
+                        <label>Icon (Emoji)</label>
+                        <input type="text" placeholder="👶" value={templateForm.icon}
+                            onChange={e => setTemplateForm({ ...templateForm, icon: e.target.value })} />
+                    </div>
+                    <div className="form-group">
+                        <label>Theme Color</label>
+                        <input type="color" value={templateForm.color}
+                            onChange={e => setTemplateForm({ ...templateForm, color: e.target.value })} />
+                    </div>
+                </div>
+
+                {/* Internal Section Tabs for Form */}
+                <div className="emr-tabs mb-4">
+                    <button className={`emr-tab ${expandedSection === 'recommended' ? 'active' : ''}`} onClick={() => setExpandedSection('recommended')}>
+                        Recommended
+                    </button>
+                    <button className={`emr-tab ${expandedSection === 'avoid' ? 'active' : ''}`} onClick={() => setExpandedSection('avoid')}>
+                        Avoid
+                    </button>
+                    <button className={`emr-tab ${expandedSection === 'homecare' ? 'active' : ''}`} onClick={() => setExpandedSection('homecare')}>
+                        Homecare
+                    </button>
+                </div>
+
+                <div className="section-builder p-4 bg-background rounded-lg border border-border">
+                    <div className="flex gap-2 mb-4">
+                        <input type="text" className="flex-1 text-sm" placeholder={expandedSection === 'homecare' ? "Enter tip..." : "Item name..."}
+                            value={newItem.field1} onChange={e => setNewItem({ ...newItem, field1: e.target.value })} />
+                        
+                        {expandedSection !== 'homecare' && (
+                            <input type="text" className="flex-1 text-sm" placeholder={expandedSection === 'recommended' ? "Dosage/Details" : "Reason to avoid"}
+                                value={newItem.field2} onChange={e => setNewItem({ ...newItem, field2: e.target.value })} />
+                        )}
+
+                        {expandedSection === 'homecare' && (
+                            <input type="text" className="w-16 text-center text-sm" placeholder="Icon"
+                                value={newItem.icon} onChange={e => setNewItem({ ...newItem, icon: e.target.value })} />
+                        )}
+
+                        {expandedSection === 'recommended' && (
+                            <select className="text-sm" value={newItem.priority} onChange={e => setNewItem({ ...newItem, priority: e.target.value })}>
+                                <option>essential</option>
+                                <option>recommended</option>
+                                <option>optional</option>
+                            </select>
+                        )}
+
+                        <button className="primary-btn-sm" onClick={() => addItemToForm(expandedSection)}>
+                            <Plus size={14} />
+                        </button>
+                    </div>
+
+                    <div className="item-list-mini max-h-40 overflow-y-auto">
+                        {templateForm[expandedSection].map((item, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-2 border-b border-border text-xs">
+                                <div className="flex gap-2">
+                                    {expandedSection === 'homecare' && <span>{item.icon}</span>}
+                                    <strong>{item.item || item.tip}</strong>
+                                    <span className="text-muted">{item.details || item.reason}</span>
+                                </div>
+                                <button className="text-accent" onClick={() => removeItemFromForm(expandedSection, idx)}>
+                                    <X size={12} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                    <button className="primary-btn flex-1" onClick={handleSaveTemplate}>
+                        <Save size={16} /> Save Template
+                    </button>
+                    <button className="secondary-btn" onClick={() => { setIsAdding(false); setIsEditing(false); }}>
+                        Cancel
+                    </button>
+                </div>
             </Modal>
 
             {/* Fever Homecare Modal */}

@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
     Search, Plus, Trash2, FileText, Share2, Printer, Pill, ArrowLeft, Stethoscope,
     PenTool, ChevronDown, ChevronUp, Activity, Heart, Thermometer, Scale,
-    TestTubes, Send, CheckCircle2, Syringe, ScanLine
+    TestTubes, Send, CheckCircle2, Syringe, ScanLine, Apple
 } from 'lucide-react';
 import StylusPad from '../components/StylusPad';
 import usePatients from '../hooks/usePatients';
@@ -14,6 +15,7 @@ import EmptyState from '../components/EmptyState';
 import { showToast } from '../components/Toast';
 import { downloadPrescription, downloadReferralSlip } from '../utils/pdfUtils';
 import { useAuth } from '../context/AuthContext';
+import { DEFAULT_DIET_TEMPLATES } from './DietTemplates';
 
 const LAB_TESTS = [
     'CBC (Complete Blood Count)', 'Blood Sugar (Fasting)', 'Blood Sugar (PP)',
@@ -43,6 +45,15 @@ const Consultation = () => {
     const [prescriptionUrl, setPrescriptionUrl] = useState('');
     const [vitals, setVitals] = useState({ bp: '', temp: '', pulse: '', weight: '', spo2: '' });
     const [activeMeds, setActiveMeds] = useState({ name: '', dosage: '', frequency: '1-0-1 (Twice a day)', duration: '5 days', category: 'medication', dispenseType: 'outdoor' });
+
+    // Diet & Homecare state
+    const [dietTemplates, setDietTemplates] = useState(() => {
+        const saved = localStorage.getItem('diet_templates');
+        return saved ? JSON.parse(saved) : DEFAULT_DIET_TEMPLATES;
+    });
+    const [showDietPanel, setShowDietPanel] = useState(false);
+    const [selectedDietTemplate, setSelectedDietTemplate] = useState(null);
+    const [customDiet, setCustomDiet] = useState('');
 
     const filteredPatients = patients.filter(p =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.mobile.includes(searchTerm)
@@ -130,6 +141,7 @@ const Consultation = () => {
             medicines: prescribedMeds.map(m => ({ name: m.name, dosage: m.dosage, frequency: m.frequency, duration: m.duration })),
             labReferrals: [...selectedLabs],
             notes,
+            dietPlan: selectedDietTemplate ? { ...selectedDietTemplate } : (customDiet ? { ageGroup: 'Custom', recommended: [{ item: customDiet, details: '' }], avoid: [] } : null),
             prescriptionUrl,
         };
         addVisit(selectedPatient.id, visitData);
@@ -200,6 +212,9 @@ const Consultation = () => {
         setPrescriptionUrl('');
         setVitals({ bp: '', temp: '', pulse: '', weight: '', spo2: '' });
         setSearchTerm('');
+        setSelectedDietTemplate(null);
+        setShowDietPanel(false);
+        setCustomDiet('');
     };
 
     // Auto-select the currently consulting patient
@@ -594,6 +609,64 @@ const Consultation = () => {
                                         <button className="secondary-btn mt-3 w-full" onClick={handleGenerateReferral}>
                                             <Send size={14} /> Generate Referral Slip
                                         </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="lab-referral-section mt-4">
+                            <div className="flex justify-between items-center mb-1 pr-2">
+                                <span className="text-[10px] uppercase font-bold text-muted">Selection</span>
+                                <Link to="/diet-templates" className="text-[10px] text-accent font-bold hover:underline flex items-center gap-1">
+                                    <Edit3 size={10} /> Manage Library
+                                </Link>
+                            </div>
+                            <button className="stylus-toggle-btn" onClick={() => setShowDietPanel(!showDietPanel)} type="button">
+                                <Apple size={15} className="text-emerald" />
+                                <span>Diet & Homecare Plan {selectedDietTemplate ? `(${selectedDietTemplate.ageGroup})` : ''}</span>
+                                {showDietPanel ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+
+                            {showDietPanel && (
+                                <div className="lab-panel mt-3" style={{ animation: 'fadeInUp 0.3s ease' }}>
+                                    <p className="text-xs text-muted mb-2">Select a template or type custom advice below</p>
+                                    <div className="flex flex-wrap gap-2 mb-4">
+                                        {dietTemplates.map(t => (
+                                            <button 
+                                                key={t.id} 
+                                                className={`tag cursor-pointer ${selectedDietTemplate?.id === t.id ? 'active' : ''}`}
+                                                onClick={() => setSelectedDietTemplate(t)}
+                                                style={{ 
+                                                    background: selectedDietTemplate?.id === t.id ? 'var(--emerald)' : 'var(--background)',
+                                                    color: selectedDietTemplate?.id === t.id ? 'white' : 'var(--text)',
+                                                    border: '1px solid var(--border)'
+                                                }}
+                                            >
+                                                {t.icon} {t.ageGroup}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {selectedDietTemplate ? (
+                                        <div className="p-3 bg-background rounded-lg border border-border">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <h5 className="font-bold text-xs uppercase text-emerald">Preview: {selectedDietTemplate.ageGroup}</h5>
+                                                <button className="text-xs text-accent" onClick={() => setSelectedDietTemplate(null)}>Remove</button>
+                                            </div>
+                                            <div className="text-xs space-y-1 max-h-32 overflow-y-auto">
+                                                <p><strong>Recommended:</strong> {selectedDietTemplate.recommended.map(r => r.item).join(', ')}</p>
+                                                <p><strong>Avoid:</strong> {selectedDietTemplate.avoid.map(a => a.item).join(', ')}</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="form-group">
+                                            <textarea 
+                                                className="text-xs" 
+                                                placeholder="Type custom diet and homecare advice here..."
+                                                value={customDiet}
+                                                onChange={(e) => setCustomDiet(e.target.value)}
+                                            />
+                                        </div>
                                     )}
                                 </div>
                             )}

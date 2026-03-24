@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
     Search, Plus, User, Phone, Calendar, ArrowRight, X, Edit3, Trash2,
-    MapPin, Heart, FileText, Pill, Activity, Droplets, Thermometer, AlertTriangle
+    MapPin, Heart, FileText, Pill, Activity, Droplets, Thermometer, AlertTriangle, Apple
 } from 'lucide-react';
 import usePatients from '../hooks/usePatients';
 import { useAuth } from '../context/AuthContext';
@@ -375,6 +375,17 @@ const Patients = () => {
                                                         {visit.labReferrals.map((lab, li) => (
                                                             <span key={li} className="tag">{lab}</span>
                                                         ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {visit.dietPlan && (
+                                                <div className="emr-field">
+                                                    <span className="emr-field-label" style={{ color: 'var(--emerald)', fontWeight: 'bold' }}>
+                                                        <Apple size={12} /> Diet & Homecare: {visit.dietPlan.ageGroup}
+                                                    </span>
+                                                    <div className="p-2 bg-emerald/5 rounded border border-emerald/10 text-xs text-muted">
+                                                        <p><strong>Rec:</strong> {visit.dietPlan.recommended.slice(0, 3).map(r => r.item).join(', ')}...</p>
                                                     </div>
                                                 </div>
                                             )}
