@@ -319,6 +319,7 @@ img {
     top: 0;
     background: var(--surface);
     z-index: 100;
+    overflow-y: auto;
 }
 
 .content {
