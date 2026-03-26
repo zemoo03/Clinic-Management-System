@@ -25,7 +25,6 @@ import DietTemplates from './pages/DietTemplates';
 import DocumentScanner from './pages/DocumentScanner';
 import Prescriptions from './pages/Prescriptions';
 import Inventory from './pages/Inventory';
-import LinkedEntities from './pages/LinkedEntities';
 import PharmacyDashboard from './pages/PharmacyDashboard';
 
 import PatientDashboard from './pages/PatientDashboard';
@@ -55,7 +54,6 @@ const DoctorSidebar = () => {
 
     const mgmtItems = [
         { path: '/reports', icon: BarChart3, label: 'Reports' },
-        { path: '/linked-entities', icon: Link2, label: 'Linked Entities' },
         { path: '/settings', icon: Settings, label: 'Settings' },
     ];
 
@@ -124,7 +122,6 @@ const AssistantSidebar = () => {
 
     const mgmtItems = [
         { path: '/reports', icon: BarChart3, label: 'Reports' },
-        { path: '/linked-entities', icon: Link2, label: 'Linked Entities' },
         { path: '/settings', icon: Settings, label: 'Settings' },
     ];
 
@@ -315,8 +312,8 @@ const Login = () => {
     const { login, user } = useAuth();
     const navigate = useNavigate();
 
-    const [entities, setEntities] = useState(() => seedDefaults());
-    const [selectedEntityId, setSelectedEntityId] = useState(entities[0]?.id || '');
+    const [entities] = useState(() => seedDefaults());
+    const [selectedEntityId] = useState('CLINIC001');
     const [userId, setUserId] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -324,7 +321,6 @@ const Login = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [loginTab, setLoginTab] = useState('doctor'); // 'doctor', 'assistant', or 'patient'
     const [rememberDevice, setRememberDevice] = useState(localStorage.getItem('scms_remember') === 'true');
-    const [isDevMode, setIsDevMode] = useState(false);
 
     // Theme state
     const [isDark, setIsDark] = useState(() => {
@@ -346,40 +342,16 @@ const Login = () => {
         else document.documentElement.removeAttribute('data-theme');
     };
 
-    // Registration modal state
-    const [showRegister, setShowRegister] = useState(false);
-    const [regForm, setRegForm] = useState({
-        name: '', address: '', phone: '',
-        doctorName: '', specialty: 'General Medicine',
-        docUserId: '', docPassword: '',
-        asstUserId: '', asstPassword: ''
-    });
+
 
     if (user) return <Navigate to="/" />;
 
-    const selectedEntity = entities.find(e => e.id === selectedEntityId);
-    
-    // Privacy: Only show the registered clinic for this device, unless Dev
-    const registeredClinicId = localStorage.getItem('scms_registered_clinic');
-    const clinics = entities.filter(e => {
-        if (e.id === 'SYSTEM') return true;
-        if (!registeredClinicId || isDevMode) return e.type === 'clinic';
-        return e.id === registeredClinicId;
-    });
+
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
         
-        // Developer Trapdoor: check for dev user id
-        if (userId.trim() === 'developer' && !isDevMode) {
-            setIsDevMode(true);
-            setLoginTab('doctor');
-            setSelectedEntityId('SYSTEM');
-            setError('Developer Mode Activated. Enter system password.');
-            return;
-        }
-
         if (loginTab !== 'patient' && !selectedEntityId) { setError('Please select a clinic.'); return; }
         setIsLoading(true);
 
@@ -403,6 +375,7 @@ const Login = () => {
                     setError('Invalid Patient ID or Mobile Number.');
                 }
             } else {
+                const selectedEntity = entities.find(e => e.id === selectedEntityId);
                 const matchedUser = selectedEntity.users.find(
                     u => u.userId === userId.trim() && u.password === password && (u.role === loginTab || u.role === 'dev')
                 );
@@ -430,28 +403,7 @@ const Login = () => {
         }
     };
 
-    const handleRegister = (e) => {
-        e.preventDefault();
-        const newId = `CLN${String(Date.now()).slice(-6)}`;
 
-        const newEntity = {
-            id: newId, type: 'clinic', name: regForm.name,
-            address: regForm.address, phone: regForm.phone,
-            doctor: regForm.doctorName, specialty: regForm.specialty,
-            users: [
-                { role: 'doctor', userId: regForm.docUserId || 'doctor', password: regForm.docPassword || '1234', displayName: regForm.doctorName || 'Doctor' },
-                { role: 'assistant', userId: regForm.asstUserId || 'asst', password: regForm.asstPassword || '1234', displayName: 'Receptionist' },
-            ],
-            createdAt: new Date().toISOString(),
-        };
-
-        const updated = [...entities, newEntity];
-        saveEntities(updated);
-        setEntities(updated);
-        setSelectedEntityId(newId);
-        setShowRegister(false);
-        setRegForm({ name: '', address: '', phone: '', doctorName: '', specialty: 'General Medicine', docUserId: '', docPassword: '', asstUserId: '', asstPassword: '' });
-    };
 
     return (
         <div className="login-container">
@@ -462,109 +414,37 @@ const Login = () => {
                 </button>
             </div>
 
-            {/* ── Registration Modal ── */}
-            {showRegister && (
-                <div className="modal-overlay" onClick={() => setShowRegister(false)}>
-                    <div className="modal-content modal-lg animate-fade-in" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2>🏥 Register New Clinic</h2>
-                            <button className="modal-close-btn" onClick={() => setShowRegister(false)}>✕</button>
-                        </div>
-                        <form onSubmit={handleRegister}>
-                            <div className="form-grid">
-                                <div className="form-group">
-                                    <label>Clinic Name *</label>
-                                    <input required type="text" placeholder="e.g. City Care Clinic"
-                                        value={regForm.name} onChange={e => setRegForm({ ...regForm, name: e.target.value })} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Phone</label>
-                                    <input type="text" placeholder="+91 98765 43210"
-                                        value={regForm.phone} onChange={e => setRegForm({ ...regForm, phone: e.target.value })} />
-                                </div>
-                            </div>
-                            <div className="form-group">
-                                <label>Address</label>
-                                <input type="text" placeholder="Full address"
-                                    value={regForm.address} onChange={e => setRegForm({ ...regForm, address: e.target.value })} />
-                            </div>
 
-                            <h4 className="font-bold text-sm mt-4 mb-2 flex items-center gap-2">
-                                <Stethoscope size={14} className="text-primary" /> Doctor Credentials
-                            </h4>
-                            <div className="form-grid">
-                                <div className="form-group">
-                                    <label>Doctor Name *</label>
-                                    <input required type="text" placeholder="Dr. Name"
-                                        value={regForm.doctorName} onChange={e => setRegForm({ ...regForm, doctorName: e.target.value })} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Specialty</label>
-                                    <input type="text" placeholder="General Medicine"
-                                        value={regForm.specialty} onChange={e => setRegForm({ ...regForm, specialty: e.target.value })} />
-                                </div>
-                            </div>
-                            <div className="form-grid">
-                                <div className="form-group">
-                                    <label>Doctor User ID *</label>
-                                    <input required type="text" placeholder="e.g. doc02"
-                                        value={regForm.docUserId} onChange={e => setRegForm({ ...regForm, docUserId: e.target.value })} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Doctor Password *</label>
-                                    <input required type="text" placeholder="e.g. pass123"
-                                        value={regForm.docPassword} onChange={e => setRegForm({ ...regForm, docPassword: e.target.value })} />
-                                </div>
-                            </div>
-                            <h4 className="font-bold text-sm mt-4 mb-2 flex items-center gap-2">
-                                <UserCog size={14} style={{ color: '#10b981' }} /> Assistant Credentials
-                            </h4>
-                            <div className="form-grid">
-                                <div className="form-group">
-                                    <label>Assistant User ID *</label>
-                                    <input required type="text" placeholder="e.g. asst02"
-                                        value={regForm.asstUserId} onChange={e => setRegForm({ ...regForm, asstUserId: e.target.value })} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Assistant Password *</label>
-                                    <input required type="text" placeholder="e.g. pass123"
-                                        value={regForm.asstPassword} onChange={e => setRegForm({ ...regForm, asstPassword: e.target.value })} />
-                                </div>
-                            </div>
-
-                            <button type="submit" className="primary-btn mt-4" style={{ width: '100%' }}>
-                                🏥 Register Clinic
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
 
             <div className="login-split-card">
                 {/* ── Visual Side ── */}
                 <div className="login-visual-panel">
                     <div className="visual-overlay"></div>
                     <img 
-                        src="https://images.unsplash.com/photo-1631217818242-aa0a703c726d?q=80&w=2070&auto=format&fit=crop" 
-                        alt="Medical Workspace" 
+                        src="/login_hero.png" 
+                        alt="Expert Healthcare professional" 
                         className="visual-image" 
                     />
                     <div className="visual-content">
                         <div className="visual-logo">
-                            <Stethoscope size={32} />
-                            <span>SmartClinic</span>
-                        </div>
-                        <h2>The Intelligent Core <br/> of your Medical Practice.</h2>
-                        <p>Streamline patient care, manage records effortlessly, and focus on what matters most—healing.</p>
-                        
-                        <div className="visual-features">
-                            <div className="v-feature">
-                                <Shield size={18} />
-                                <span>HIPAA Compliant Security</span>
+                            <div className="logo-pulse">
+                                <Heart size={32} className="text-white fill-accent-blue/40" />
                             </div>
-                            <div className="v-feature">
-                                <LayoutDashboard size={18} />
-                                <span>Intelligent Dashboards</span>
+                            <span>SmartClinic <span className="text-accent-blue font-light">Pro</span></span>
+                        </div>
+                        <div className="glass-content-card">
+                            <h2>Excellence in <br/><span className="text-accent-blue">Clinical Care</span>.</h2>
+                            <p>Empowering healthcare leaders with precision tools for modern practice management and patient success.</p>
+                            
+                            <div className="visual-features">
+                                <div className="v-feature">
+                                    <Stethoscope size={18} />
+                                    <span>Precision Diagnostics</span>
+                                </div>
+                                <div className="v-feature">
+                                    <Shield size={18} />
+                                    <span>Military-Grade Security</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -574,7 +454,7 @@ const Login = () => {
                 <div className="login-form-panel">
                     <div className="login-form-header">
                         <h1>Welcome Back</h1>
-                        <p>Access your workspace as a doctor, staff, or patient</p>
+                        <p>Access your clinic workspace</p>
                     </div>
 
                     <div className="login-type-switch">
@@ -602,19 +482,7 @@ const Login = () => {
                     </div>
 
                     <form className="modern-login-form" onSubmit={handleLogin}>
-                        {loginTab !== 'patient' && (
-                            <div className="form-group">
-                                <label>Selected Clinic</label>
-                                <div className="select-wrapper">
-                                    <select
-                                        value={selectedEntityId}
-                                        onChange={e => { setSelectedEntityId(e.target.value); setError(''); }}
-                                    >
-                                        {clinics.map(c => <option key={c.id} value={c.id}>{c.name} — {c.id}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-                        )}
+
 
                         <div className="form-group">
                             <label>{loginTab === 'patient' ? 'Mobile / Patient ID' : `${loginTab.charAt(0).toUpperCase() + loginTab.slice(1)} User ID`}</label>
@@ -677,12 +545,7 @@ const Login = () => {
                             )}
                         </button>
 
-                        {loginTab !== 'patient' && (
-                            <div className="login-divider">
-                                <span>New Clinic?</span>
-                                <button type="button" onClick={() => setShowRegister(true)} className="register-link">Register Clinic</button>
-                            </div>
-                        )}
+
                         
                         <div className="demo-credentials-hint">
                             <p><strong>Demo:</strong> doc01 / doc123 (SmartClinic)</p>
@@ -748,7 +611,6 @@ const AppRoutes = () => {
             {/* Shared: Inventory & Prescriptions (Doctor + Assistant) */}
             <Route path="/inventory" element={<ProtectedLayout><Inventory /></ProtectedLayout>} />
             <Route path="/prescriptions" element={<ProtectedLayout><Prescriptions /></ProtectedLayout>} />
-            <Route path="/linked-entities" element={<ProtectedLayout><LinkedEntities /></ProtectedLayout>} />
             <Route path="/pharmacy" element={<ProtectedLayout><PharmacyDashboard /></ProtectedLayout>} />
 
             <Route path="*" element={<Navigate to="/" />} />

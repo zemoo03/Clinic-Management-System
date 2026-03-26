@@ -11,8 +11,9 @@ import SearchBar from '../components/SearchBar';
 import EmptyState from '../components/EmptyState';
 import { showToast } from '../components/Toast';
 import AadhaarScanner from '../components/AadhaarScanner';
-import { Camera } from 'lucide-react';
+import { Camera, Stethoscope } from 'lucide-react';
 import useQueue from '../hooks/useAppointments';
+import ConsultationForm from '../components/ConsultationForm';
 
 const Patients = () => {
     const { isDoctor, isAssistant } = useAuth();
@@ -25,7 +26,7 @@ const Patients = () => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedPatient, setSelectedPatient] = useState(null);
-    const [emrTab, setEmrTab] = useState('info'); // 'info' | 'visits'
+    const [emrTab, setEmrTab] = useState('info'); // 'info' | 'visits' | 'consult'
     const [showScanner, setShowScanner] = useState(false);
 
     const [newPatient, setNewPatient] = useState({
@@ -250,6 +251,11 @@ const Patients = () => {
                             <button className={`emr-tab ${emrTab === 'visits' ? 'active' : ''}`} onClick={() => setEmrTab('visits')}>
                                 <FileText size={14} /> Visit History ({selectedPatient.visits?.length || 0})
                             </button>
+                            {isDoctor && (
+                                <button className={`emr-tab ${emrTab === 'consult' ? 'active' : ''}`} onClick={() => setEmrTab('consult')}>
+                                    <Stethoscope size={14} /> Consultation
+                                </button>
+                            )}
                         </div>
 
                         {/* Demographics Tab */}
@@ -399,6 +405,21 @@ const Patients = () => {
                                         </div>
                                     ))
                                 )}
+                            </div>
+                        )}
+
+                        {/* Consultation Tab */}
+                        {emrTab === 'consult' && isDoctor && (
+                            <div className="mt-4">
+                                <ConsultationForm 
+                                    patient={selectedPatient} 
+                                    onComplete={() => {
+                                        setEmrTab('visits');
+                                        // Refresh the selected patient to show new visit
+                                        const updated = filteredPatients.find(p => p.id === selectedPatient.id);
+                                        if (updated) setSelectedPatient(updated);
+                                    }} 
+                                />
                             </div>
                         )}
                     </div>
