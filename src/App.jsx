@@ -9,6 +9,10 @@ import DashboardLayout from './layouts/DashboardLayout';
 // Pages
 import LoginPage from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Patients from './pages/Patients';
+import Appointments from './pages/Appointments';
+import DietTemplates from './pages/DietTemplates';
+import Settings from './pages/Settings';
 
 // Mock Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -31,28 +35,25 @@ const AppRoutes = () => {
             
             <Route path="/patients" element={
                 <ProtectedRoute>
-                    <div className="p-8">
-                        <h1 className="text-3xl font-black mb-4">Patient Management</h1>
-                        <p className="text-faint">Patient records and EMR will be implemented here.</p>
-                    </div>
+                    <Patients />
                 </ProtectedRoute>
             } />
 
             <Route path="/appointments" element={
                 <ProtectedRoute>
-                    <div className="p-8">
-                        <h1 className="text-3xl font-black mb-4">Appointment Queue</h1>
-                        <p className="text-faint">Queue management and scheduling will be implemented here.</p>
-                    </div>
+                    <Appointments />
+                </ProtectedRoute>
+            } />
+
+            <Route path="/diet-templates" element={
+                <ProtectedRoute>
+                    <DietTemplates />
                 </ProtectedRoute>
             } />
 
             <Route path="/settings" element={
                 <ProtectedRoute>
-                    <div className="p-8">
-                        <h1 className="text-3xl font-black mb-4">Account Settings</h1>
-                        <p className="text-faint">Profile and clinic settings will be implemented here.</p>
-                    </div>
+                    <Settings />
                 </ProtectedRoute>
             } />
 

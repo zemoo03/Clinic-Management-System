@@ -1,5 +1,7 @@
 .sidebar {
-    background: var(--surface);
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-right: 1px solid var(--border);
     height: 100vh;
     display: flex;
@@ -7,6 +9,10 @@
     transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     z-index: 1000;
+}
+
+[data-theme="dark"] .sidebar {
+    background: rgba(15, 23, 42, 0.4);
 }
 
 .sidebar.expanded {

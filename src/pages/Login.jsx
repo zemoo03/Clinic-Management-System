@@ -55,119 +55,111 @@ const LoginPage = () => {
 
     return (
         <div className="login-page">
-            {/* Split Layout */}
-            <div className="login-visual text-white">
-                <div className="visual-overlay"></div>
-                <div className="visual-content">
-                    <div className="logo mb-12">
-                         <div className="logo-icon bg-white text-primary">
-                             <Heart size={28} fill="currentColor" />
+            {/* Left Panel: Visual Branding */}
+            <div className="login-visual">
+                <div className="clinic-bg-wrapper"></div>
+                <div className="visual-gradient-overlay"></div>
+                <div className="visual-content px-12">
+                     <div className="flex flex-col items-center gap-6">
+                         <div className="logo-icon-premium">
+                             <Heart size={38} fill="currentColor" />
                          </div>
-                         <h2 className="text-3xl font-black ml-4">MediCore Pro</h2>
-                    </div>
-                    
-                    <div className="glass p-10 rounded-3xl border-white/20">
-                        <h1 className="text-5xl font-black mb-6 leading-tight">Elevate Your <br/><span className="text-primary-light">Medical Practice</span>.</h1>
-                        <p className="text-lg opacity-90 mb-10 leading-relaxed font-medium">The most intuitive platform for managing your clinic, patients, and growth — all in one unified workspace.</p>
-                        
-                        <div className="flex gap-6">
-                            <div className="flex items-center gap-3">
-                                <Shield className="text-primary-light" />
-                                <span className="font-bold">Next-Gen Security</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <Users className="text-primary-light" />
-                                <span className="font-bold">Patient Success</span>
-                            </div>
-                        </div>
-                    </div>
+                         <h1 className="brand-name-left">MediCore</h1>
+                         <div className="h-1 w-16 bg-white/40 rounded-full"></div>
+                         <p className="brand-tagline-left">Premium Healthcare Platform</p>
+                     </div>
                 </div>
             </div>
 
+            {/* Right Panel: Sign-In Form */}
             <div className="login-form-container">
-                <div className="form-card animate-fade-in">
-                    <div className="text-center mb-10">
-                        <h2 className="text-3xl font-black text-main mb-2">Welcome Back</h2>
-                        <p className="text-faint font-medium">Please enter your workspace details</p>
+                <div className="form-inner animate-fade-in">
+                    <div className="mb-8">
+                        <h2 className="text-3xl font-bold text-main tracking-tight mb-2">Sign in</h2>
+                        <p className="text-sm text-faint font-medium">Welcome back! Please sign in to continue.</p>
                     </div>
 
-                    <div className="role-selector mb-8">
+                    <button type="button" className="google-btn mb-6">
+                        <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google" className="google-icon" />
+                        <span>Continue with Google</span>
+                    </button>
+
+                    <div className="divider-wrapper mb-6">
+                        <span className="divider-text">or</span>
+                    </div>
+
+                    <div className="role-selector mb-6">
                         <button 
-                            className={`role-btn ${role === 'doctor' ? 'active' : ''}`}
+                            className={`role-btn-sm ${role === 'doctor' ? 'active' : ''}`}
                             onClick={() => setRole('doctor')}
                         >
-                            <Stethoscope size={18} />
                             <span>Doctor</span>
                         </button>
                         <button 
-                            className={`role-btn ${role === 'assistant' ? 'active' : ''}`}
+                            className={`role-btn-sm ${role === 'assistant' ? 'active' : ''}`}
                             onClick={() => setRole('assistant')}
                         >
-                            <UserCog size={18} />
                             <span>Staff</span>
                         </button>
                         <button 
-                            className={`role-btn ${role === 'patient' ? 'active' : ''}`}
+                            className={`role-btn-sm ${role === 'patient' ? 'active' : ''}`}
                             onClick={() => setRole('patient')}
                         >
-                            <Users size={18} />
                             <span>Patient</span>
                         </button>
                     </div>
 
-                    <form onSubmit={handleLogin} className="space-y-6">
+                    <form onSubmit={handleLogin} className="space-y-5">
                         <div className="form-group">
-                            <label>Username / ID</label>
-                            <div className="input-icon-wrapper">
-                                <Mail className="icon" size={18} />
-                                <input 
-                                    type="text" 
-                                    value={userId}
-                                    onChange={(e) => setUserId(e.target.value)}
-                                    placeholder="Enter your unique ID"
-                                    required
-                                />
-                            </div>
+                            <label className="text-xs font-bold uppercase tracking-wider text-faint mb-2 block">Email address / ID</label>
+                            <input 
+                                type="text" 
+                                value={userId}
+                                onChange={(e) => setUserId(e.target.value)}
+                                className="login-input-simple"
+                                placeholder="hello@medicore.com"
+                                required
+                            />
                         </div>
 
                         <div className="form-group">
-                            <div className="flex justify-between items-center mb-1">
-                                <label>Password</label>
+                            <div className="flex justify-between items-center mb-2">
+                                <label className="text-xs font-bold uppercase tracking-wider text-faint block">Password</label>
                                 <span className="text-primary text-xs font-bold cursor-pointer hover:underline">Forgot password?</span>
                             </div>
-                            <div className="input-icon-wrapper">
-                                <Lock className="icon" size={18} />
+                            <div className="relative">
                                 <input 
                                     type={showPassword ? "text" : "password"} 
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
+                                    className="login-input-simple pr-10"
                                     placeholder="••••••••"
                                     required
                                 />
                                 <button 
                                     type="button" 
-                                    className="eye-btn"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-faint hover:text-main"
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
                             </div>
                         </div>
 
-                        {error && <div className="error-msg">{error}</div>}
+                        {error && <div className="error-msg text-xs py-2">{error}</div>}
 
-                        <button type="submit" className="login-btn-submit" disabled={isLoading}>
-                            {isLoading ? "Validating Workspace..." : (
-                                <span className="flex items-center gap-2">
-                                    Sign In <ArrowRight size={20} />
-                                </span>
-                            )}
+                        <button type="submit" className="login-btn-primary-new" disabled={isLoading}>
+                            {isLoading ? "Signing in..." : "Continue"}
                         </button>
                     </form>
 
-                    <footer className="mt-12 text-center">
-                        <p className="text-xs text-faint font-medium">
-                            &copy; 2026 MediCore Technologies. All rights reserved.
+                    <p className="mt-8 text-center text-sm font-medium text-faint">
+                        Don't have an account? <span className="text-primary cursor-pointer hover:underline">Sign up</span>
+                    </p>
+
+                    <footer className="mt-16 text-center">
+                        <p className="text-[10px] text-faint uppercase tracking-widest font-bold">
+                            &copy; MediCore &middot; Privacy &middot; Terms
                         </p>
                     </footer>
                 </div>

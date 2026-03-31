@@ -211,3 +211,53 @@ img {
 .toast button:hover {
     color: var(--text-main);
 }
+
+/* ========================================
+   EMR TABS (PREMIUM TABS)
+   ======================================== */
+.emr-tabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.375rem;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    width: fit-content;
+    margin-bottom: 1.5rem;
+}
+
+[data-theme="dark"] .emr-tabs {
+    background: rgba(15, 23, 42, 0.4);
+}
+
+.emr-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.625rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.emr-tab:hover {
+    color: var(--primary);
+    background: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="dark"] .emr-tab:hover {
+    background: rgba(15, 23, 42, 0.5);
+}
+
+.emr-tab.active {
+    background: var(--primary);
+    color: var(--white);
+    box-shadow: 0 4px 10px var(--primary-glow);
+}
