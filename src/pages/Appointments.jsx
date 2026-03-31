@@ -12,6 +12,7 @@ import StatCard from '../components/StatCard';
 import Modal from '../components/Modal';
 import EmptyState from '../components/EmptyState';
 import { showToast } from '../components/Toast';
+import { sendQueueWhatsAppAlert, canSendWhatsApp } from '../services/whatsapp';
 
 const Queue = () => {
     const { isDoctor, isAssistant } = useAuth();
@@ -48,25 +49,56 @@ const Queue = () => {
     }[status] || null);
 
     /* ── Handlers ── */
-    const handleAddWalkIn = (e) => {
+    const handleAddWalkIn = async (e) => {
         e.preventDefault();
         const item = addToQueue(walkIn);
         showToast(`${walkIn.name} added as ${item.token}`, 'success');
+
+        if (canSendWhatsApp(item.mobile)) {
+            sendQueueWhatsAppAlert({
+                mobile: item.mobile,
+                token: item.token,
+                status: item.status,
+                clinicName: 'SmartClinic',
+                position: waitingList.length, // they are added at the end
+            });
+        }
         setWalkIn({ name: '', mobile: '', type: 'Walk-in', fee: 300 });
         setIsWalkInOpen(false);
     };
 
-    const handleAddRegistered = (patient) => {
+    const handleAddRegistered = async (patient) => {
         const item = addToQueue({ id: patient.id, name: patient.name, mobile: patient.mobile, type: 'Registered', fee: 300 });
         showToast(`${patient.name} added as ${item.token}`, 'success');
+
+        if (canSendWhatsApp(item.mobile)) {
+            sendQueueWhatsAppAlert({
+                mobile: item.mobile,
+                token: item.token,
+                status: item.status,
+                clinicName: 'SmartClinic',
+                position: waitingList.length,
+            });
+        }
         setIsRegisteredOpen(false);
         setPatientSearch('');
     };
 
     /** Doctor or Assistant — start consultation */
-    const handleStartConsultation = (token, name) => {
+    const handleStartConsultation = async (token, name, mobile) => {
         callPatient(token);
         showToast(`🩺 Consultation started with ${name}`, 'success');
+
+        if (canSendWhatsApp(mobile)) {
+            const pos = waitingList.findIndex(q => q.token === token);
+            await sendQueueWhatsAppAlert({
+                mobile,
+                token,
+                status: 'Consulting',
+                clinicName: 'SmartClinic',
+                position: pos >= 0 ? pos : 0,
+            });
+        }
     };
 
     /** Doctor or Assistant — end consultation */
@@ -237,7 +269,7 @@ const Queue = () => {
                                                 <button
                                                     className="start-consult-btn"
                                                     title="Start Consultation"
-                                                    onClick={() => handleStartConsultation(item.token, item.name)}
+                                                    onClick={() => handleStartConsultation(item.token, item.name, item.mobile)}
                                                 >
                                                     <Play size={13} fill="currentColor" />
                                                     Start
