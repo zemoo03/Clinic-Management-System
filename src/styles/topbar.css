@@ -1,9 +1,13 @@
 .topbar {
     height: var(--topbar-height);
-    background: rgba(255, 255, 255, 0.4);
+    background: linear-gradient(
+        90deg,
+        rgba(230, 242, 255, 0.92) 0%,
+        rgba(219, 234, 254, 0.88) 100%
+    );
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid rgba(147, 197, 253, 0.4);
     display: flex;
     align-items: center;
     justify-content: space-between;

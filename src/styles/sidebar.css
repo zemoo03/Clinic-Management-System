@@ -1,8 +1,13 @@
 .sidebar {
-    background: rgba(255, 255, 255, 0.4);
+    background: linear-gradient(
+        180deg,
+        rgba(214, 232, 255, 0.96) 0%,
+        rgba(230, 242, 255, 0.94) 45%,
+        rgba(219, 234, 254, 0.92) 100%
+    );
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-right: 1px solid var(--border);
+    border-right: 1px solid rgba(147, 197, 253, 0.45);
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -29,7 +34,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 1.5rem;
-    border-bottom: 1px solid var(--border-light);
+    border-bottom: 1px solid rgba(147, 197, 253, 0.35);
+    background: rgba(230, 242, 255, 0.5);
 }
 
 .sidebar-header .logo {
@@ -60,8 +66,8 @@
 .toggle-btn {
     width: 24px;
     height: 24px;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: rgba(249, 251, 255, 0.95);
+    border: 1px solid rgba(147, 197, 253, 0.5);
     border-radius: 6px;
     display: flex;
     align-items: center;
@@ -126,7 +132,8 @@
 
 .sidebar-footer {
     padding: 1.5rem 0.75rem;
-    border-top: 1px solid var(--border-light);
+    border-top: 1px solid rgba(147, 197, 253, 0.35);
+    background: rgba(219, 234, 254, 0.25);
 }
 
 .logout-btn {

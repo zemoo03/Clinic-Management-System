@@ -1,4 +1,5 @@
 @import url('./design-system.css');
+@import url('./clinic-pages.css');
 
 /* ========================================
    BASE STYLES
@@ -110,9 +111,13 @@ img {
 }
 
 .main-content {
-    padding: 2rem;
+    padding: clamp(1rem, 3vw, 2rem);
     overflow-y: auto;
+    overflow-x: hidden;
     height: calc(100vh - var(--topbar-height));
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* ========================================

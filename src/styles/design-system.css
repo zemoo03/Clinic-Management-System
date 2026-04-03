@@ -25,6 +25,10 @@
     --warning-light: #fffbeb;
     --danger: #ef4444;
     --danger-light: #fef2f2;
+    --accent: #d97706;
+    --accent-light: #fffbeb;
+    --emerald: #059669;
+    --background-subtle: rgba(230, 242, 255, 0.85);
 
     /* Neutrals */
     --white: #ffffff;
