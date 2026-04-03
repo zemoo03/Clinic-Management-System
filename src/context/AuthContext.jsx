@@ -13,7 +13,8 @@ export const AuthProvider = ({ children }) => {
      *  - 'doctor'     → Full consultation, EMR, prescription, lab referral access
      *  - 'assistant'  → Patient registration, queue management, billing/receipts
      */
-    const login = (name, role = 'doctor', clinicCode = 'CLINIC001') => {
+    // identityIdOverride is used only for demo login so PatientDashboard can map to DEMO_PATIENTS ids.
+    const login = (name, role = 'doctor', clinicCode = 'CLINIC001', identityIdOverride = null) => {
         const roleConfig = {
             doctor: { defaultName: 'Dr. Payal Patel', idPrefix: 'doc_001' },
             assistant: { defaultName: 'Receptionist', idPrefix: 'asst_001' },
@@ -25,7 +26,7 @@ export const AuthProvider = ({ children }) => {
         const userData = {
             name: name || cfg.defaultName,
             role,
-            id: cfg.idPrefix,
+            id: identityIdOverride || cfg.idPrefix,
             clinicId: clinicCode,
             clinicName: 'SmartClinic',
             clinicAddress: 'MG Road, Mumbai - 400001',

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Wallet, Plus, Download, ChevronRight, QrCode, Search, Receipt, CreditCard, Eye, X } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import StatCard from '../components/StatCard';
@@ -21,6 +21,13 @@ const Billing = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [viewInvoice, setViewInvoice] = useState(null);
+
+    useEffect(() => {
+        // Restore demo invoices when localStorage is empty (helps new tabs show data).
+        if (!invoices || invoices.length === 0) {
+            setInvoices(DEMO_INVOICES);
+        }
+    }, [invoices, setInvoices]);
 
     const [newInvoice, setNewInvoice] = useState({
         patient: '',

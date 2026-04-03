@@ -27,12 +27,48 @@ const loadQueue = () => {
 const Reports = () => {
 
     const { revenueData, patientData, visitTypeData, monthlyData, stats } = useMemo(() => {
-        const billing = loadBillingRecords();
-        const patients = loadPatients();
-        const queue = loadQueue();
+        const now = new Date();
+
+        let billing = loadBillingRecords();
+        let patients = loadPatients();
+        let queue = loadQueue();
+
+        const ymd = (d) => {
+            const dt = new Date(d);
+            return dt.toISOString().split('T')[0];
+        };
+
+        // ---- Demo fallback (so charts + tabs are never blank) ----
+        if (!billing || billing.length === 0) {
+            billing = [
+                { id: 'INV-DEMO-001', date: ymd(new Date(now.getTime() - 0 * 86400000)), total: 650, status: 'Paid' },
+                { id: 'INV-DEMO-002', date: ymd(new Date(now.getTime() - 1 * 86400000)), total: 1200, status: 'Paid' },
+                { id: 'INV-DEMO-003', date: ymd(new Date(now.getTime() - 3 * 86400000)), total: 400, status: 'Paid' },
+                { id: 'INV-DEMO-004', date: ymd(new Date(now.getTime() - 5 * 86400000)), total: 980, status: 'Paid' },
+            ];
+        }
+
+        if (!patients || patients.length === 0) {
+            patients = [
+                { id: 'PAT-DEMO-001', createdAt: new Date(now.getTime() - 2 * 86400000).toISOString(), registeredAt: ymd(new Date(now.getTime() - 2 * 86400000)) },
+                { id: 'PAT-DEMO-002', createdAt: new Date(now.getTime() - 8 * 86400000).toISOString(), registeredAt: ymd(new Date(now.getTime() - 8 * 86400000)) },
+                { id: 'PAT-DEMO-003', createdAt: new Date(now.getTime() - 15 * 86400000).toISOString(), registeredAt: ymd(new Date(now.getTime() - 15 * 86400000)) },
+                { id: 'PAT-DEMO-004', createdAt: new Date(now.getTime() - 22 * 86400000).toISOString(), registeredAt: ymd(new Date(now.getTime() - 22 * 86400000)) },
+                { id: 'PAT-DEMO-005', createdAt: new Date(now.getTime() - 27 * 86400000).toISOString(), registeredAt: ymd(new Date(now.getTime() - 27 * 86400000)) },
+            ];
+        }
+
+        if (!queue || queue.length === 0) {
+            queue = [
+                { type: 'New', createdAt: new Date(now.getTime() - 0 * 86400000).toISOString() },
+                { type: 'Follow-up', createdAt: new Date(now.getTime() - 1 * 86400000).toISOString() },
+                { type: 'Walk-in', createdAt: new Date(now.getTime() - 2 * 86400000).toISOString() },
+                { type: 'New', createdAt: new Date(now.getTime() - 4 * 86400000).toISOString() },
+                { type: 'Follow-up', createdAt: new Date(now.getTime() - 6 * 86400000).toISOString() },
+            ];
+        }
 
         /* --- weekly revenue (last 7 days) --- */
-        const now = new Date();
         const weekRevMap = {};
         for (let i = 6; i >= 0; i--) {
             const d = new Date(now); d.setDate(d.getDate() - i);

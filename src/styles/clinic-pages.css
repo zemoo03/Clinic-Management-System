@@ -964,3 +964,452 @@
 .stagger-children > *:nth-child(3) { animation-delay: 0.1s; }
 .stagger-children > *:nth-child(4) { animation-delay: 0.15s; }
 .stagger-children > *:nth-child(5) { animation-delay: 0.2s; }
+
+/* ========================================
+   Missing UI for new tabs (stability-first)
+   ======================================== */
+
+/* ---- Table styling used by Prescriptions/Billing ---- */
+.data-table {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.data-table table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--surface);
+    border: 1px solid rgba(147, 197, 253, 0.45);
+    border-radius: var(--radius-xl);
+}
+
+.data-table thead th {
+    text-align: left;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    padding: 1rem 0.9rem;
+    border-bottom: 1px solid rgba(147, 197, 253, 0.35);
+    background: rgba(230, 242, 255, 0.55);
+    white-space: nowrap;
+}
+
+.data-table tbody td {
+    padding: 0.85rem 0.9rem;
+    border-bottom: 1px solid rgba(241, 245, 249, 0.75);
+    vertical-align: top;
+}
+
+.data-table tbody tr:hover td {
+    background: rgba(79, 70, 229, 0.04);
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ---- Reports grid/cards ---- */
+.reports-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+}
+
+@media (min-width: 900px) {
+    .reports-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.report-card {
+    border: 1px solid rgba(147, 197, 253, 0.45);
+    border-radius: var(--radius-xl);
+    background: rgba(249, 251, 255, 0.9);
+    padding: 1rem;
+    overflow: hidden;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.chart-container {
+    width: 100%;
+}
+
+/* ---- Consultation selection UI ---- */
+.selection-screen {
+    padding: 1.25rem;
+    border-radius: var(--radius-2xl);
+    border: 1px solid rgba(147, 197, 253, 0.45);
+    background: rgba(249, 251, 255, 0.85);
+}
+
+.consulting-highlight {
+    border: 1px solid rgba(147, 197, 253, 0.45);
+    border-radius: var(--radius-xl);
+    padding: 0.9rem;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    background: rgba(230, 242, 255, 0.45);
+}
+
+.consulting-highlight:hover {
+    transform: translateY(-1px);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-md);
+}
+
+.token-mini {
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--radius-full);
+    font-weight: 900;
+    font-size: 0.8rem;
+}
+
+.consultation-interface-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.secondary-btn-sm {
+    padding: 0.45rem 0.7rem;
+    background: rgba(249, 251, 255, 0.95);
+    color: var(--text-main);
+    border: 1px solid rgba(147, 197, 253, 0.55);
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.secondary-btn-sm:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.empty-state-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto;
+    border-radius: var(--radius-full);
+    background: rgba(230, 242, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-faint);
+}
+
+/* ---- Dispensary: common + indoor ---- */
+.dispensary-categories {
+    padding: 0.9rem;
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(147, 197, 253, 0.35);
+}
+
+.dispensary-cat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.8rem;
+    border-radius: var(--radius-full);
+    margin-right: 0.5rem;
+    background: rgba(230, 242, 255, 0.55);
+    border: 1px solid rgba(147, 197, 253, 0.35);
+}
+
+.dispensary-cat-chip .cat-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(79, 70, 229, 0.08);
+}
+
+.dispensary-cat-chip .cat-label {
+    font-weight: 800;
+    font-size: 0.8rem;
+    color: var(--text-main);
+}
+
+.dispensary-orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.dispensary-order-card {
+    padding: 0;
+    border-radius: var(--radius-2xl);
+}
+
+.order-done {
+    opacity: 0.92;
+}
+
+.order-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid rgba(147, 197, 253, 0.25);
+    cursor: pointer;
+}
+
+.order-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.order-header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.order-patient-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    background: rgba(79, 70, 229, 0.08);
+    border: 1px solid rgba(147, 197, 253, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.order-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 120px;
+}
+
+.progress-bar {
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: rgba(147, 197, 253, 0.25);
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: var(--radius-full);
+}
+
+.order-detail {
+    padding: 1rem;
+}
+
+.order-notes {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-lg);
+    background: rgba(245, 158, 11, 0.08);
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.dispensary-cat-section {
+    margin-top: 0.75rem;
+}
+
+.cat-section-title {
+    font-size: 0.9rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+}
+
+.cat-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.dispensary-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.7rem 0.75rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(147, 197, 253, 0.3);
+    background: rgba(249, 251, 255, 0.95);
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.dispensary-item:hover {
+    transform: translateY(-1px);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.item-dispensed {
+    opacity: 0.78;
+}
+
+.item-checkbox {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(147, 197, 253, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(230, 242, 255, 0.45);
+    flex-shrink: 0;
+}
+
+.checkbox-empty {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    background: rgba(147, 197, 253, 0.25);
+}
+
+.item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.cat-icon-mini {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(79, 70, 229, 0.08);
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+/* ---- Dispensary: outdoor ---- */
+.outdoor-orders-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.outdoor-order-card {
+    padding: 0;
+}
+
+.outdoor-card-header {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(147, 197, 253, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.outdoor-meds-list {
+    padding: 0.9rem 1rem 0.2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.outdoor-med-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.55rem 0.65rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(147, 197, 253, 0.25);
+    background: rgba(249, 251, 255, 0.95);
+}
+
+.outdoor-card-actions {
+    padding: 0.9rem 1rem 1rem 1rem;
+    display: flex;
+    gap: 0.75rem;
+}
+
+.outdoor-card-actions button {
+    height: 38px;
+}
+
+/* ---- Utility tweaks for flex-1 usage with buttons ---- */
+.flex-1 { flex: 1; }
+.min-w-0 { min-width: 0; }
+
+.primary-btn.flex-1,
+.secondary-btn.flex-1,
+.primary-btn-sm.flex-1,
+.secondary-btn-sm.flex-1 {
+    width: auto;
+}
+
+/* ---- Extra common spacing/radius utilities used in pages ---- */
+.p-5 { padding: 1.25rem; }
+.p-6 { padding: 1.5rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-6 { margin-top: 1.5rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 0.75rem; }
+
+.rounded-xl { border-radius: var(--radius-xl) !important; }
+.rounded-2xl { border-radius: var(--radius-2xl) !important; }
+.rounded-full { border-radius: var(--radius-full) !important; }
+
+.overflow-y-auto { overflow-y: auto; }
+.overflow-x-hidden { overflow-x: hidden; }
+.overflow-hidden { overflow: hidden; }
+
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: 1fr; }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.font-extrabold { font-weight: 800; }
+.uppercase { text-transform: uppercase; }
+.tracking-wider { letter-spacing: 0.06em; }
+.gap-0 { gap: 0; }
+
+/* ========================================
+   Responsive grid utilities (no Tailwind)
+   ======================================== */
+@media (max-width: 640px) {
+    .grid-cols-2 { grid-template-columns: 1fr; }
+    .grid-cols-3 { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 641px) and (max-width: 900px) {
+    .grid-cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Prevent tables from breaking layout on small screens */
+.data-table table {
+    min-width: 720px;
+}
+
+@media (max-width: 920px) {
+    .data-table table {
+        min-width: 680px;
+    }
+}
+

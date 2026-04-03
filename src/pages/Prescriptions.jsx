@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FileText, CheckCircle2, Clock, Eye, ShoppingCart, X, Pill, AlertCircle, Building2 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import SearchBar from '../components/SearchBar';
@@ -59,6 +59,14 @@ const Prescriptions = () => {
     const [statusFilter, setStatusFilter] = useState('All');
     const [clinicFilter, setClinicFilter] = useState('All');
     const [viewRx, setViewRx] = useState(null);
+
+    useEffect(() => {
+        // If localStorage already contains an empty array, the UI becomes blank.
+        // Restore demo data once for stability.
+        if (!prescriptions || prescriptions.length === 0) {
+            setPrescriptions(DEMO_PRESCRIPTIONS);
+        }
+    }, [prescriptions, setPrescriptions]);
 
     const clinics = [...new Set(prescriptions.map(rx => rx.clinic))];
 

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import useLocalStorage from './useLocalStorage';
 
 const DEMO_ORDERS = [
@@ -59,6 +59,14 @@ export const DISPENSARY_CATEGORIES = [
 
 const useDispensary = () => {
     const [orders, setOrders] = useLocalStorage('dispensary_orders', DEMO_ORDERS);
+
+    // If user previously cleared localStorage (or it's persisted as empty),
+    // restore demo orders so the new tabs don't look empty/broken.
+    useEffect(() => {
+        if (!orders || orders.length === 0) {
+            setOrders(DEMO_ORDERS);
+        }
+    }, [orders, setOrders]);
 
     const addOrder = useCallback((orderData) => {
         const newOrder = {

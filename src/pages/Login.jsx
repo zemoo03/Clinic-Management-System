@@ -39,9 +39,15 @@ const LoginPage = () => {
             // Mock authentication
             const matched = (userId === 'doc01' && password === 'doc123' && role === 'doctor') ||
                            (userId === 'asst01' && password === 'asst01' && role === 'assistant');
+                            // Patient demo mapping (connects to PatientDashboard DEMO_PATIENTS ids)
+                            const patientMatched = (userId === 'pat01' && password === 'pat01' && role === 'patient');
             
-            if (matched) {
-                await login(role === 'doctor' ? 'Dr. Payal Patel' : 'Receptionist', role);
+            if (matched || patientMatched) {
+                if (role === 'patient') {
+                    await login('Rahul Verma', role, 'CLINIC001', 'PAT001');
+                } else {
+                    await login(role === 'doctor' ? 'Dr. Payal Patel' : 'Receptionist', role);
+                }
                 navigate('/');
             } else {
                 setError('Invalid credentials for the selected role.');

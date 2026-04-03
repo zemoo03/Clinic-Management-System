@@ -10,7 +10,9 @@ import {
     LogOut,
     ChevronLeft,
     ChevronRight,
-    Heart
+    Heart,
+    Wallet,
+    Pill
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
@@ -20,14 +22,32 @@ const Sidebar = () => {
     const { logout, user, isDoctor, isAssistant, isPatient } = useAuth();
     const { isSidebarOpen, toggleSidebar } = useUI();
 
-    const menuItems = [
-        { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-        { path: '/appointments', icon: Calendar, label: 'Appointments' },
-        { path: '/patients', icon: Users, label: 'Patients' },
-        ...(isDoctor ? [{ path: '/consultations', icon: Stethoscope, label: 'Consultations' }] : []),
-        { path: '/reports', icon: FileText, label: 'Reports' },
-        { path: '/settings', icon: Settings, label: 'Settings' },
-    ];
+    const menuItems = isPatient
+        ? [
+            { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
+            { path: '/settings', icon: Settings, label: 'Profile / Settings' },
+        ]
+        : isDoctor
+            ? [
+                { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
+                { path: '/appointments', icon: Calendar, label: 'Patient Queue' },
+                { path: '/patients', icon: Users, label: 'Patients (EMR)' },
+                { path: '/consultations', icon: Stethoscope, label: 'Consultation' },
+                { path: '/prescriptions', icon: FileText, label: 'Prescriptions' },
+                { path: '/reports', icon: Wallet, label: 'Reports' },
+                { path: '/settings', icon: Settings, label: 'Profile / Settings' },
+            ]
+            : [
+                { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
+                { path: '/patients', icon: Users, label: 'Patient Registration' },
+                { path: '/appointments', icon: Calendar, label: 'Queue Management' },
+                { path: '/indoor-dispensary', icon: Pill, label: 'Indoor Dispensary' },
+                { path: '/outdoor-dispensary', icon: Pill, label: 'Outdoor Dispensary' },
+                { path: '/prescriptions', icon: FileText, label: 'Prescription (Dispense)' },
+                { path: '/billing', icon: Wallet, label: 'Billing' },
+                { path: '/reports', icon: Wallet, label: 'Reports' },
+                { path: '/settings', icon: Settings, label: 'Profile / Settings' },
+            ];
 
     return (
         <aside className={`sidebar ${isSidebarOpen ? 'expanded' : 'collapsed'}`}>
