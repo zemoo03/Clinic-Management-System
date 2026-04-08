@@ -7,6 +7,8 @@ import StylusPad from './StylusPad';
 import usePatients from '../hooks/usePatients';
 import useQueue from '../hooks/useAppointments';
 import useDispensary from '../hooks/useDispensary';
+import usePrescriptions from '../hooks/usePrescriptions';
+import useBilling from '../hooks/useBilling';
 import { showToast } from './Toast';
 import { downloadPrescription, downloadReferralSlip } from '../utils/pdfUtils';
 import { useAuth } from '../context/AuthContext';
@@ -27,6 +29,8 @@ const ConsultationForm = ({ patient, onComplete }) => {
     const { addVisit } = usePatients();
     const { consultingItem, markCompleted } = useQueue();
     const { addOrder } = useDispensary();
+    const { addPrescription } = usePrescriptions();
+    const { addInvoice } = useBilling();
 
     const [symptoms, setSymptoms] = useState('');
     const [diagnosis, setDiagnosis] = useState('');
@@ -121,38 +125,43 @@ const ConsultationForm = ({ patient, onComplete }) => {
     const handleSaveAndComplete = () => {
         if (!patient) return;
 
-        // Save the visit to EMR
+        const doctorName = user?.name || 'Dr. Payal Patel';
+        const clinicName = user?.clinicName || 'SmartClinic';
+        const clinicId   = user?.clinicId   || '';
+
+        // 1. Save the visit to EMR
         const visitData = {
             date: new Date().toISOString().split('T')[0],
-            doctor: user?.name || 'Dr. Payal Patel',
+            doctor: doctorName,
             symptoms,
             diagnosis,
             vitals: { ...vitals },
             medicines: prescribedMeds.map(m => ({ name: m.name, dosage: m.dosage, frequency: m.frequency, duration: m.duration })),
             labReferrals: [...selectedLabs],
             notes,
-            dietPlan: selectedDietTemplate ? { ...selectedDietTemplate } : (customDiet ? { ageGroup: 'Custom', recommended: [{ item: customDiet, details: '' }], avoid: [] } : null),
+            dietPlan: selectedDietTemplate
+                ? { ...selectedDietTemplate }
+                : (customDiet ? { ageGroup: 'Custom', recommended: [{ item: customDiet, details: '' }], avoid: [] } : null),
             prescriptionUrl,
         };
         addVisit(patient.id, visitData);
+        showToast(`Visit saved to ${patient.name}'s EMR`, 'success');
 
-        // Mark consulting patient as completed in queue if applicable
+        // Mark consulting patient as completed in queue
         if (consultingItem && consultingItem.patientId === patient.id) {
             markCompleted(consultingItem.token);
         }
 
-        showToast(`Visit saved to ${patient.name}'s EMR`, 'success');
-
-        // Auto-create dispensary orders
+        // 2. Auto-create dispensary orders (Indoor / Outdoor)
         if (prescribedMeds.length > 0) {
-            const indoorItems = prescribedMeds.filter(m => m.dispenseType === 'indoor');
+            const indoorItems  = prescribedMeds.filter(m => m.dispenseType === 'indoor');
             const outdoorItems = prescribedMeds.filter(m => m.dispenseType === 'outdoor');
 
             if (indoorItems.length > 0) {
                 addOrder({
                     patientId: patient.id,
                     patientName: patient.name,
-                    doctor: user?.name || 'Dr. Payal Patel',
+                    doctor: doctorName,
                     type: 'indoor',
                     items: indoorItems.map(m => ({
                         category: m.category || 'medication',
@@ -162,16 +171,16 @@ const ConsultationForm = ({ patient, onComplete }) => {
                         quantity: 1,
                         dispensed: false,
                     })),
-                    notes: notes,
+                    notes,
                 });
-                showToast(`${indoorItems.length} items sent to Indoor Dispensary`, 'info');
+                showToast(`${indoorItems.length} item(s) → Indoor Dispensary`, 'info');
             }
 
             if (outdoorItems.length > 0) {
                 addOrder({
                     patientId: patient.id,
                     patientName: patient.name,
-                    doctor: user?.name || 'Dr. Payal Patel',
+                    doctor: doctorName,
                     type: 'outdoor',
                     items: outdoorItems.map(m => ({
                         category: m.category || 'medication',
@@ -183,9 +192,45 @@ const ConsultationForm = ({ patient, onComplete }) => {
                     })),
                     notes: '',
                 });
-                showToast(`${outdoorItems.length} items sent to Outdoor Dispensary`, 'info');
+                showToast(`${outdoorItems.length} item(s) → Outdoor Dispensary`, 'info');
             }
         }
+
+        // 3. Auto-create Prescription record
+        if (prescribedMeds.length > 0) {
+            addPrescription({
+                patient: patient.name,
+                patientMobile: patient.mobile || '',
+                patientId: patient.id,
+                doctor: doctorName,
+                clinic: clinicName,
+                clinicId,
+                diagnosis,
+                labReferrals: [...selectedLabs],
+                medicines: prescribedMeds.map(m => ({
+                    name: m.name,
+                    dosage: m.dosage,
+                    frequency: m.frequency,
+                    duration: m.duration,
+                    qty: 1,
+                })),
+            });
+            showToast('Prescription sent to Rx module', 'success');
+        }
+
+        // 4. Auto-create draft Billing invoice
+        const billingItems = [
+            { description: 'Consultation Fee', amount: 300 },
+            ...prescribedMeds.map(m => ({ description: `${m.name} ${m.dosage}`, amount: 0 })),
+            ...selectedLabs.map(lab => ({ description: `Lab: ${lab}`, amount: 0 })),
+        ];
+        addInvoice({
+            patient: patient.name,
+            patientId: patient.id,
+            diagnosis,
+            items: billingItems,
+        });
+        showToast('Draft invoice created in Billing', 'info');
 
         if (onComplete) onComplete();
     };

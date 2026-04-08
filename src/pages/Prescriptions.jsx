@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { FileText, CheckCircle2, Clock, Eye, ShoppingCart, X, Pill, AlertCircle, Building2 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import SearchBar from '../components/SearchBar';
@@ -6,69 +6,16 @@ import StatCard from '../components/StatCard';
 import Modal from '../components/Modal';
 import EmptyState from '../components/EmptyState';
 import { showToast } from '../components/Toast';
-import useLocalStorage from '../hooks/useLocalStorage';
-
-const DEMO_PRESCRIPTIONS = [
-    {
-        id: 'RX-001', patient: 'Rahul Verma', patientMobile: '9876543210', doctor: 'Dr. Payal Patel', clinic: 'SmartClinic', clinicId: 'CLINIC001',
-        status: 'Pending', date: '2024-02-18', time: '10:15 AM',
-        medicines: [
-            { name: 'Paracetamol 500mg', dosage: '500mg', frequency: '1-0-1 (Twice a day)', duration: '5 days', qty: 10 },
-            { name: 'Cetirizine 10mg', dosage: '10mg', frequency: '0-0-1 (At night)', duration: '5 days', qty: 5 },
-            { name: 'Cough Syrup (100ml)', dosage: '5ml', frequency: '1-1-1 (Thrice a day)', duration: '5 days', qty: 1 },
-        ]
-    },
-    {
-        id: 'RX-002', patient: 'Sita Rani', patientMobile: '8765432109', doctor: 'Dr. Payal Patel', clinic: 'SmartClinic', clinicId: 'CLINIC001',
-        status: 'Dispensed', date: '2024-02-18', time: '09:45 AM',
-        medicines: [
-            { name: 'Amoxicillin 250mg', dosage: '250mg', frequency: '1-0-1 (Twice a day)', duration: '7 days', qty: 14 },
-            { name: 'Omeprazole 20mg', dosage: '20mg', frequency: '1-0-0 (Morning)', duration: '7 days', qty: 7 },
-        ]
-    },
-    {
-        id: 'RX-003', patient: 'Amit Singh', patientMobile: '7654321098', doctor: 'Dr. Patel', clinic: 'City Care Clinic', clinicId: 'CLINIC002',
-        status: 'Pending', date: '2024-02-18', time: '09:30 AM',
-        medicines: [
-            { name: 'Metformin 500mg', dosage: '500mg', frequency: '1-0-1 (Twice a day)', duration: '30 days', qty: 60 },
-            { name: 'Azithromycin 500mg', dosage: '500mg', frequency: '1-0-0 (Morning)', duration: '3 days', qty: 3 },
-            { name: 'Paracetamol 500mg', dosage: '500mg', frequency: '1-0-1 (Twice a day)', duration: '3 days', qty: 6 },
-            { name: 'ORS Sachets', dosage: '1 sachet', frequency: '1-1-1 (Thrice a day)', duration: '3 days', qty: 9 },
-        ]
-    },
-    {
-        id: 'RX-004', patient: 'Priya Desai', patientMobile: '6543210987', doctor: 'Dr. Payal Patel', clinic: 'SmartClinic', clinicId: 'CLINIC001',
-        status: 'Dispensed', date: '2024-02-18', time: '09:00 AM',
-        medicines: [
-            { name: 'Betadine Ointment', dosage: 'Apply externally', frequency: '1-0-1 (Twice a day)', duration: '7 days', qty: 1 },
-        ]
-    },
-    {
-        id: 'RX-005', patient: 'Karan Malhotra', patientMobile: '5432109876', doctor: 'Dr. Patel', clinic: 'City Care Clinic', clinicId: 'CLINIC002',
-        status: 'Pending', date: '2024-02-17', time: '05:30 PM',
-        medicines: [
-            { name: 'Dolo 650mg', dosage: '650mg', frequency: '1-0-1 (Twice a day)', duration: '3 days', qty: 6 },
-            { name: 'Cetirizine 10mg', dosage: '10mg', frequency: '0-0-1 (At night)', duration: '5 days', qty: 5 },
-        ]
-    },
-];
+import usePrescriptions from '../hooks/usePrescriptions';
 
 const Prescriptions = () => {
-    const [prescriptions, setPrescriptions] = useLocalStorage('store_prescriptions', DEMO_PRESCRIPTIONS);
+    const { prescriptions, markDispensed, pendingCount, dispensedCount } = usePrescriptions();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     const [clinicFilter, setClinicFilter] = useState('All');
     const [viewRx, setViewRx] = useState(null);
 
-    useEffect(() => {
-        // If localStorage already contains an empty array, the UI becomes blank.
-        // Restore demo data once for stability.
-        if (!prescriptions || prescriptions.length === 0) {
-            setPrescriptions(DEMO_PRESCRIPTIONS);
-        }
-    }, [prescriptions, setPrescriptions]);
-
-    const clinics = [...new Set(prescriptions.map(rx => rx.clinic))];
+    const clinics = [...new Set(prescriptions.map(rx => rx.clinic).filter(Boolean))];
 
     const filtered = prescriptions.filter(rx => {
         const matchesSearch = rx.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,13 +26,8 @@ const Prescriptions = () => {
         return matchesSearch && matchesStatus && matchesClinic;
     });
 
-    const pendingCount = prescriptions.filter(rx => rx.status === 'Pending').length;
-    const dispensedCount = prescriptions.filter(rx => rx.status === 'Dispensed').length;
-
     const handleDispense = (rxId) => {
-        setPrescriptions(prescriptions.map(rx =>
-            rx.id === rxId ? { ...rx, status: 'Dispensed' } : rx
-        ));
+        markDispensed(rxId);
         if (viewRx?.id === rxId) {
             setViewRx({ ...viewRx, status: 'Dispensed' });
         }

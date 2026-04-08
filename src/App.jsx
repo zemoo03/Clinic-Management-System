@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { UIProvider } from './context/UIContext';
+import { PrescriptionsProvider } from './context/PrescriptionsContext';
+import { BillingProvider } from './context/BillingContext';
 
 // Layouts
 import DashboardLayout from './layouts/DashboardLayout';
@@ -117,9 +119,13 @@ const App = () => {
     return (
         <AuthProvider>
             <UIProvider>
-                <Router>
-                    <AppRoutes />
-                </Router>
+                <PrescriptionsProvider>
+                    <BillingProvider>
+                        <Router>
+                            <AppRoutes />
+                        </Router>
+                    </BillingProvider>
+                </PrescriptionsProvider>
             </UIProvider>
         </AuthProvider>
     );

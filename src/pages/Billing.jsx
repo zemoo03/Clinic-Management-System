@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Wallet, Plus, Download, ChevronRight, QrCode, Search, Receipt, CreditCard, Eye, X } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import StatCard from '../components/StatCard';
@@ -6,28 +6,13 @@ import SearchBar from '../components/SearchBar';
 import Modal from '../components/Modal';
 import EmptyState from '../components/EmptyState';
 import { showToast } from '../components/Toast';
-import useLocalStorage from '../hooks/useLocalStorage';
-
-const DEMO_INVOICES = [
-    { id: 'INV-2024-001', patient: 'Rahul Verma', amount: 500, date: '2024-02-18', status: 'Paid', method: 'UPI', items: [{ description: 'Consultation Fee', amount: 300 }, { description: 'Medicine', amount: 200 }] },
-    { id: 'INV-2024-002', patient: 'Sita Rani', amount: 1200, date: '2024-02-18', status: 'Pending', method: '-', items: [{ description: 'Consultation Fee', amount: 500 }, { description: 'Lab Tests', amount: 700 }] },
-    { id: 'INV-2024-003', patient: 'Amit Singh', amount: 800, date: '2024-02-17', status: 'Paid', method: 'Cash', items: [{ description: 'Consultation Fee', amount: 300 }, { description: 'X-Ray', amount: 500 }] },
-    { id: 'INV-2024-004', patient: 'Priya Desai', amount: 350, date: '2024-02-17', status: 'Paid', method: 'UPI', items: [{ description: 'Follow-up Visit', amount: 200 }, { description: 'Prescription', amount: 150 }] },
-    { id: 'INV-2024-005', patient: 'Karan Malhotra', amount: 2200, date: '2024-02-16', status: 'Pending', method: '-', items: [{ description: 'Consultation Fee', amount: 500 }, { description: 'Blood Work', amount: 1200 }, { description: 'Medicine', amount: 500 }] },
-];
+import useBilling from '../hooks/useBilling';
 
 const Billing = () => {
-    const [invoices, setInvoices] = useLocalStorage('invoices', DEMO_INVOICES);
+    const { invoices, addInvoice, markAsPaid, totalCollected, totalPending } = useBilling();
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [viewInvoice, setViewInvoice] = useState(null);
-
-    useEffect(() => {
-        // Restore demo invoices when localStorage is empty (helps new tabs show data).
-        if (!invoices || invoices.length === 0) {
-            setInvoices(DEMO_INVOICES);
-        }
-    }, [invoices, setInvoices]);
 
     const [newInvoice, setNewInvoice] = useState({
         patient: '',
@@ -39,14 +24,6 @@ const Billing = () => {
         inv.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
         inv.id.toLowerCase().includes(searchTerm.toLowerCase())
     );
-
-    const todayTotal = invoices
-        .filter(inv => inv.status === 'Paid')
-        .reduce((sum, inv) => sum + inv.amount, 0);
-
-    const pendingTotal = invoices
-        .filter(inv => inv.status === 'Pending')
-        .reduce((sum, inv) => sum + inv.amount, 0);
 
     const upiCount = invoices.filter(inv => inv.method === 'UPI').length;
 
@@ -72,25 +49,17 @@ const Billing = () => {
     const handleCreateInvoice = (e) => {
         e.preventDefault();
         const total = newInvoice.items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-        const invoice = {
-            id: `INV-2024-${String(invoices.length + 1).padStart(3, '0')}`,
+        addInvoice({
             patient: newInvoice.patient,
-            amount: total,
-            date: new Date().toISOString().split('T')[0],
-            status: 'Pending',
-            method: newInvoice.method,
-            items: newInvoice.items.filter(item => item.description && item.amount)
-        };
-        setInvoices([invoice, ...invoices]);
-        showToast(`Invoice ${invoice.id} created for ₹${total}`, 'success');
+            items: newInvoice.items.filter(item => item.description && item.amount),
+        });
+        showToast(`Invoice created for ₹${total}`, 'success');
         setIsCreateOpen(false);
         setNewInvoice({ patient: '', items: [{ description: '', amount: '' }], method: 'Cash' });
     };
 
-    const markAsPaid = (invoiceId) => {
-        setInvoices(invoices.map(inv =>
-            inv.id === invoiceId ? { ...inv, status: 'Paid', method: 'Cash' } : inv
-        ));
+    const handleMarkAsPaid = (invoiceId, method = 'Cash') => {
+        markAsPaid(invoiceId, method);
         showToast('Invoice marked as paid', 'success');
     };
 
@@ -103,8 +72,8 @@ const Billing = () => {
             </PageHeader>
 
             <div className="stats-grid">
-                <StatCard icon={Wallet} label="Total Collected" value={`₹${todayTotal.toLocaleString()}`} />
-                <StatCard icon={CreditCard} label="Pending" value={`₹${pendingTotal.toLocaleString()}`} />
+                <StatCard icon={Wallet} label="Total Collected" value={`₹${totalCollected.toLocaleString()}`} />
+                <StatCard icon={CreditCard} label="Pending" value={`₹${totalPending.toLocaleString()}`} />
                 <StatCard icon={QrCode} label="UPI Payments" value={upiCount} />
                 <StatCard icon={Receipt} label="Total Invoices" value={invoices.length} variant="luxury" />
             </div>
@@ -294,8 +263,8 @@ const Billing = () => {
                         <div className="flex gap-3">
                             {viewInvoice.status === 'Pending' && (
                                 <button className="primary-btn flex-1" onClick={() => {
-                                    markAsPaid(viewInvoice.id);
-                                    setViewInvoice({ ...viewInvoice, status: 'Paid' });
+                                    handleMarkAsPaid(viewInvoice.id);
+                                    setViewInvoice({ ...viewInvoice, status: 'Paid', method: 'Cash' });
                                 }}>
                                     <Wallet size={16} /> Mark as Paid
                                 </button>
