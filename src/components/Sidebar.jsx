@@ -19,13 +19,13 @@ import { useUI } from '../context/UIContext';
 import '../styles/sidebar.css';
 
 const Sidebar = () => {
-    const { logout, user, isDoctor, isAssistant, isPatient } = useAuth();
+    const { logout, user, isDoctor, isAssistant, isAdmin } = useAuth();
     const { isSidebarOpen, toggleSidebar } = useUI();
 
-    const menuItems = isPatient
+    const menuItems = isAdmin
         ? [
-            { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-            { path: '/settings', icon: Settings, label: 'Profile / Settings' },
+            { path: '/', icon: LayoutDashboard, label: 'Admin Dashboard' },
+            { path: '/settings', icon: Settings, label: 'System Settings' },
         ]
         : isDoctor
             ? [

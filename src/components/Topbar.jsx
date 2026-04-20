@@ -14,7 +14,7 @@ import '../styles/topbar.css';
 
 const Topbar = () => {
     const { user } = useAuth();
-    const { theme, toggleTheme, toggleSidebar } = useUI();
+    const { toggleSidebar } = useUI();
 
     return (
         <header className="topbar">
@@ -35,10 +35,6 @@ const Topbar = () => {
 
             {/* Right Side Actions */}
             <div className="topbar-actions">
-                <button className="icon-btn" onClick={toggleTheme} title="Toggle Theme">
-                    {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-                </button>
-                
                 <button className="icon-btn relative" title="Notifications">
                     <Bell size={20} />
                     <span className="dot"></span>

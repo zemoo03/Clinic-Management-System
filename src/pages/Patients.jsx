@@ -57,10 +57,11 @@ const Patients = () => {
             name: extractedData.name || prev.name,
             age: extractedData.age || prev.age,
             gender: extractedData.gender || prev.gender,
+            mobile: extractedData.mobile || prev.mobile,
             aadhaarNumber: extractedData.aadhaarNumber,
             address: extractedData.address || prev.address,
         }));
-        showToast('Aadhaar details extracted successfully', 'success');
+        showToast('ID details extracted successfully', 'success');
         setShowScanner(false);
     };
 

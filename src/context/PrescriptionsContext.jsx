@@ -1,77 +1,77 @@
-import { createContext, useContext, useCallback, useState } from 'react';
+import { createContext, useContext, useCallback, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import api from '../services/api';
 
 const PrescriptionsContext = createContext();
 
 export const usePrescriptions = () => useContext(PrescriptionsContext);
 
-const STORAGE_KEY = (clinicId) => `scms_${clinicId || 'default'}_shared_prescriptions`;
-
 export const PrescriptionsProvider = ({ children }) => {
     const { user } = useAuth();
-    const clinicId = user?.clinicId || 'default';
+    const [prescriptions, setPrescriptions] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-    const readFromStorage = () => {
+    // ─── Fetch from MongoDB ────────────────────────────────────────────────
+    const fetchPrescriptions = useCallback(async () => {
+        if (!user) return;
+        setLoading(true);
         try {
-            const raw = localStorage.getItem(STORAGE_KEY(clinicId));
-            return raw ? JSON.parse(raw) : [];
-        } catch {
-            return [];
+            const res = await api.get('/api/prescriptions');
+            setPrescriptions(res.data);
+        } catch (err) {
+            console.error('Failed to fetch prescriptions:', err.message);
+        } finally {
+            setLoading(false);
         }
-    };
+    }, [user]);
 
-    const [prescriptions, setPrescriptionsState] = useState(readFromStorage);
+    useEffect(() => {
+        fetchPrescriptions();
+    }, [fetchPrescriptions]);
 
-    const persist = (data) => {
-        localStorage.setItem(STORAGE_KEY(clinicId), JSON.stringify(data));
-    };
+    // ─── Add prescription ──────────────────────────────────────────────────
+    const addPrescription = useCallback(async (data) => {
+        try {
+            const res = await api.post('/api/prescriptions', {
+                patient:       data.patient || '',
+                patientMobile: data.patientMobile || '',
+                patientId:     data.patientId || '',
+                doctor:        data.doctor || user?.name || 'Doctor',
+                clinic:        data.clinic || user?.clinicName || 'SmartClinic',
+                diagnosis:     data.diagnosis || '',
+                labReferrals:  data.labReferrals || [],
+                medicines:     data.medicines || [],
+            });
+            setPrescriptions(prev => [res.data, ...prev]);
+            return res.data;
+        } catch (err) {
+            console.error('Failed to add prescription:', err.message);
+            throw err;
+        }
+    }, [user]);
 
-    const setPrescriptions = (updater) => {
-        setPrescriptionsState(prev => {
-            const next = typeof updater === 'function' ? updater(prev) : updater;
-            persist(next);
-            return next;
-        });
-    };
+    // ─── Mark dispensed ────────────────────────────────────────────────────
+    const markDispensed = useCallback(async (rxId) => {
+        try {
+            const res = await api.patch(`/api/prescriptions/${rxId}/status`, { status: 'Dispensed' });
+            setPrescriptions(prev => prev.map(rx => rx.id === rxId ? res.data : rx));
+        } catch (err) {
+            console.error('Failed to mark dispensed:', err.message);
+        }
+    }, []);
 
-    const addPrescription = useCallback((data) => {
-        const now = new Date();
-        const newRx = {
-            id: `RX-${Date.now()}`,
-            patient: data.patient || '',
-            patientMobile: data.patientMobile || '',
-            patientId: data.patientId || '',
-            doctor: data.doctor || 'Doctor',
-            clinic: data.clinic || 'SmartClinic',
-            clinicId: data.clinicId || clinicId,
-            diagnosis: data.diagnosis || '',
-            labReferrals: data.labReferrals || [],
-            medicines: data.medicines || [],
-            status: 'Pending',
-            date: now.toISOString().split('T')[0],
-            time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-            createdAt: now.toISOString(),
-        };
-        setPrescriptions(prev => [newRx, ...prev]);
-        return newRx;
-    }, [clinicId]); // eslint-disable-line
-
-    const markDispensed = useCallback((rxId) => {
-        setPrescriptions(prev =>
-            prev.map(rx => rx.id === rxId ? { ...rx, status: 'Dispensed' } : rx)
-        );
-    }, []); // eslint-disable-line
-
-    const pendingCount = prescriptions.filter(rx => rx.status === 'Pending').length;
+    const pendingCount   = prescriptions.filter(rx => rx.status === 'Pending').length;
     const dispensedCount = prescriptions.filter(rx => rx.status === 'Dispensed').length;
 
     return (
         <PrescriptionsContext.Provider value={{
             prescriptions,
+            loading,
             addPrescription,
             markDispensed,
             pendingCount,
             dispensedCount,
+            refresh: fetchPrescriptions,
         }}>
             {children}
         </PrescriptionsContext.Provider>

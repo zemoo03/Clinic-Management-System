@@ -73,10 +73,6 @@ img {
     background: var(--text-faint);
 }
 
-[data-theme="dark"] ::-webkit-scrollbar-thumb {
-    background: var(--surface);
-}
-
 /* ========================================
    UTILITY CLASSES
    ======================================== */
@@ -233,10 +229,6 @@ img {
     margin-bottom: 1.5rem;
 }
 
-[data-theme="dark"] .emr-tabs {
-    background: rgba(15, 23, 42, 0.4);
-}
-
 .emr-tab {
     display: flex;
     align-items: center;
@@ -255,10 +247,6 @@ img {
 .emr-tab:hover {
     color: var(--primary);
     background: rgba(255, 255, 255, 0.5);
-}
-
-[data-theme="dark"] .emr-tab:hover {
-    background: rgba(15, 23, 42, 0.5);
 }
 
 .emr-tab.active {

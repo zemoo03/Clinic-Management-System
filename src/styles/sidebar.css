@@ -16,10 +16,6 @@
     z-index: 1000;
 }
 
-[data-theme="dark"] .sidebar {
-    background: rgba(15, 23, 42, 0.4);
-}
-
 .sidebar.expanded {
     width: var(--sidebar-width);
 }

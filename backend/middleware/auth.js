@@ -1,37 +1,17 @@
-const admin = require('firebase-admin');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_clinic_key_123';
 
-// Ideally, initialize firebase admin using service account credentials.
-// For now, if the env exposes FIREBASE_CREDENTIALS, use it, else alert to config.
-// try {
-//     const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
-//     admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-// } catch (err) {
-//     console.warn("⚠️ Firebase Admin Not Configured! Provide FIREBASE_CREDENTIALS in .env");
-// }
+const verifyToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) return res.status(401).json({ error: 'No token provided' });
 
-const verifyToken = async (req, res, next) => {
-    const bearerHeader = req.headers['authorization'];
-    
-    // Check if bearer is undefined
-    if (typeof bearerHeader !== 'undefined') {
-        const bearer = bearerHeader.split(' ');
-        const bearerToken = bearer[1];
-        
-        try {
-            // Verify token with Firebase (Uncomment when Firebase is initialized)
-            // const decodedToken = await admin.auth().verifyIdToken(bearerToken);
-            // req.user = decodedToken;
-            
-            // Mock behavior for testing before Firebase config
-            req.user = { uid: "mock-firebase-id", role: "doctor" }; 
-            
-            next();
-        } catch (error) {
-            res.status(403).json({ message: 'Invalid or Expired Token' });
-        }
-    } else {
-        // Forbidden
-        res.status(401).json({ message: 'Authentication Token Required' });
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.user = decoded; // { _id, userId, role, clinicId }
+        next();
+    } catch (err) {
+        return res.status(401).json({ error: 'Invalid or expired token' });
     }
 };
 

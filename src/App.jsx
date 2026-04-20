@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { UIProvider } from './context/UIContext';
 import { PrescriptionsProvider } from './context/PrescriptionsContext';
 import { BillingProvider } from './context/BillingContext';
+import { AppointmentsProvider } from './context/AppointmentsContext';
 
 // Layouts
 import DashboardLayout from './layouts/DashboardLayout';
@@ -15,7 +16,7 @@ import Patients from './pages/Patients';
 import Appointments from './pages/Appointments';
 import DietTemplates from './pages/DietTemplates';
 import Settings from './pages/Settings';
-import PatientDashboard from './pages/PatientDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import Consultation from './pages/Consultation';
 import Prescriptions from './pages/Prescriptions';
 import Reports from './pages/Reports';
@@ -33,7 +34,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 const RoleHome = () => {
     const { user } = useAuth();
-    if (user?.role === 'patient') return <PatientDashboard />;
+    if (user?.role === 'admin') return <AdminDashboard />;
     return <Dashboard />;
 };
 
@@ -104,7 +105,7 @@ const AppRoutes = () => {
             } />
 
             <Route path="/settings" element={
-                <ProtectedRoute allowedRoles={['doctor','assistant','patient']}>
+                <ProtectedRoute allowedRoles={['doctor','assistant','admin']}>
                     <Settings />
                 </ProtectedRoute>
             } />
@@ -118,15 +119,17 @@ const AppRoutes = () => {
 const App = () => {
     return (
         <AuthProvider>
-            <UIProvider>
-                <PrescriptionsProvider>
-                    <BillingProvider>
-                        <Router>
-                            <AppRoutes />
-                        </Router>
-                    </BillingProvider>
-                </PrescriptionsProvider>
-            </UIProvider>
+            <AppointmentsProvider>
+                <UIProvider>
+                    <PrescriptionsProvider>
+                        <BillingProvider>
+                            <Router>
+                                <AppRoutes />
+                            </Router>
+                        </BillingProvider>
+                    </PrescriptionsProvider>
+                </UIProvider>
+            </AppointmentsProvider>
         </AuthProvider>
     );
 };

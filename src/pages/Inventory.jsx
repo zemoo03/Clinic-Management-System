@@ -1,28 +1,33 @@
-import { useState } from 'react';
-import { Package, Plus, Search, Edit3, Trash2, AlertTriangle, TrendingDown, X, BarChart3, Pill } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Package, Plus, Edit3, Trash2, AlertTriangle, BarChart3, Pill } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import SearchBar from '../components/SearchBar';
 import Modal from '../components/Modal';
 import EmptyState from '../components/EmptyState';
 import StatCard from '../components/StatCard';
 import { showToast } from '../components/Toast';
-import useLocalStorage from '../hooks/useLocalStorage';
-
-const DEMO_INVENTORY = [
-    { id: 'MED001', name: 'Paracetamol 500mg', category: 'Tablet', stock: 240, price: 12, costPrice: 8, manufacturer: 'Cipla', expiry: '2025-12', batchNo: 'B2024-001', minStock: 50 },
-    { id: 'MED002', name: 'Amoxicillin 250mg', category: 'Capsule', stock: 180, price: 35, costPrice: 22, manufacturer: 'Sun Pharma', expiry: '2025-08', batchNo: 'B2024-002', minStock: 30 },
-    { id: 'MED003', name: 'Azithromycin 500mg', category: 'Tablet', stock: 12, price: 65, costPrice: 42, manufacturer: 'Zydus', expiry: '2025-06', batchNo: 'B2024-003', minStock: 20 },
-    { id: 'MED004', name: 'Metformin 500mg', category: 'Tablet', stock: 8, price: 18, costPrice: 10, manufacturer: 'Dr. Reddy\'s', expiry: '2025-10', batchNo: 'B2024-004', minStock: 40 },
-    { id: 'MED005', name: 'Cetirizine 10mg', category: 'Tablet', stock: 300, price: 8, costPrice: 4, manufacturer: 'Cipla', expiry: '2026-03', batchNo: 'B2024-005', minStock: 50 },
-    { id: 'MED006', name: 'Omeprazole 20mg', category: 'Capsule', stock: 150, price: 22, costPrice: 14, manufacturer: 'Lupin', expiry: '2025-09', batchNo: 'B2024-006', minStock: 30 },
-    { id: 'MED007', name: 'Cough Syrup (100ml)', category: 'Syrup', stock: 45, price: 85, costPrice: 55, manufacturer: 'Dabur', expiry: '2025-07', batchNo: 'B2024-007', minStock: 20 },
-    { id: 'MED008', name: 'Betadine Ointment', category: 'Ointment', stock: 60, price: 45, costPrice: 28, manufacturer: 'Win Medicare', expiry: '2026-01', batchNo: 'B2024-008', minStock: 15 },
-    { id: 'MED009', name: 'ORS Sachets', category: 'Sachet', stock: 200, price: 5, costPrice: 2, manufacturer: 'FDC', expiry: '2026-06', batchNo: 'B2024-009', minStock: 100 },
-    { id: 'MED010', name: 'Dolo 650mg', category: 'Tablet', stock: 4, price: 15, costPrice: 9, manufacturer: 'Micro Labs', expiry: '2025-11', batchNo: 'B2024-010', minStock: 50 },
-];
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 const Inventory = () => {
-    const [inventory, setInventory] = useLocalStorage('store_inventory', DEMO_INVENTORY);
+    const { user } = useAuth();
+    const [inventory, setInventory] = useState([]);
+    const [loading, setLoading]     = useState(false);
+
+    const fetchInventory = useCallback(async () => {
+        if (!user) return;
+        setLoading(true);
+        try {
+            const res = await api.get('/api/inventory');
+            setInventory(res.data);
+        } catch (err) {
+            console.error('Failed to fetch inventory:', err.message);
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
+
+    useEffect(() => { fetchInventory(); }, [fetchInventory]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('All');
     const [isAddOpen, setIsAddOpen] = useState(false);
@@ -45,31 +50,44 @@ const Inventory = () => {
     const lowStockItems = inventory.filter(m => m.stock <= m.minStock);
     const totalValue = inventory.reduce((sum, m) => sum + (m.stock * m.costPrice), 0);
 
-    const handleAdd = (e) => {
+    const handleAdd = async (e) => {
         e.preventDefault();
-        const med = {
-            ...newMed,
-            id: `MED${String(inventory.length + 1).padStart(3, '0')}`,
-            stock: Number(newMed.stock),
-            price: Number(newMed.price),
-            costPrice: Number(newMed.costPrice),
-            minStock: Number(newMed.minStock),
-        };
-        setInventory([med, ...inventory]);
-        showToast(`${med.name} added to inventory`, 'success');
-        setIsAddOpen(false);
-        setNewMed({ name: '', category: 'Tablet', stock: '', price: '', costPrice: '', manufacturer: '', expiry: '', batchNo: '', minStock: 20 });
-    };
-
-    const handleDelete = (id, name) => {
-        if (window.confirm(`Remove ${name} from inventory?`)) {
-            setInventory(inventory.filter(m => m.id !== id));
-            showToast(`${name} removed`, 'info');
+        try {
+            const res = await api.post('/api/inventory', {
+                ...newMed,
+                stock: Number(newMed.stock),
+                price: Number(newMed.price),
+                costPrice: Number(newMed.costPrice),
+                minStock: Number(newMed.minStock),
+            });
+            setInventory(prev => [res.data, ...prev]);
+            showToast(`${res.data.name} added to inventory`, 'success');
+            setIsAddOpen(false);
+            setNewMed({ name: '', category: 'Tablet', stock: '', price: '', costPrice: '', manufacturer: '', expiry: '', batchNo: '', minStock: 20 });
+        } catch (err) {
+            showToast('Failed to add medicine', 'error');
         }
     };
 
-    const handleUpdateStock = (id, newStock) => {
-        setInventory(inventory.map(m => m.id === id ? { ...m, stock: Math.max(0, Number(newStock)) } : m));
+    const handleDelete = async (id, name) => {
+        if (window.confirm(`Remove ${name} from inventory?`)) {
+            try {
+                await api.delete(`/api/inventory/${id}`);
+                setInventory(prev => prev.filter(m => m.id !== id));
+                showToast(`${name} removed`, 'info');
+            } catch (err) {
+                showToast('Failed to delete medicine', 'error');
+            }
+        }
+    };
+
+    const handleUpdateStock = async (id, newStock) => {
+        try {
+            const res = await api.put(`/api/inventory/${id}`, { stock: Math.max(0, Number(newStock)) });
+            setInventory(prev => prev.map(m => m.id === id ? res.data : m));
+        } catch (err) {
+            console.error('Failed to update stock:', err.message);
+        }
     };
 
     return (

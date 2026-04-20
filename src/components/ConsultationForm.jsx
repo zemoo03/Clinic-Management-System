@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
     Plus, Trash2, FileText, Share2, Printer, Pill, Stethoscope,
-    PenTool, ChevronDown, ChevronUp, Heart, TestTubes, Send, CheckCircle2, ScanLine, Apple, Edit3
+    PenTool, ChevronDown, ChevronUp, Heart, TestTubes, CheckCircle2, Apple, X, ChevronRight, Search, LogOut
 } from 'lucide-react';
 import StylusPad from './StylusPad';
 import usePatients from '../hooks/usePatients';
@@ -236,245 +236,234 @@ const ConsultationForm = ({ patient, onComplete }) => {
     };
 
     return (
-        <div className="consultation-interface animate-fade-in">
-            {/* Left — Examination */}
-            <div className="exam-section glass">
-                {/* Patient Info Bar */}
-                <div className="flex items-center gap-3 p-3 bg-background rounded-lg mb-4">
-                    <div className="patient-avatar" style={{ width: 40, height: 40, fontSize: '0.9rem' }}>
-                        {patient.name.charAt(0)}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                        <p className="font-bold text-sm">{patient.name}</p>
-                        <p className="text-xs text-muted">{patient.age}y, {patient.gender} • {patient.mobile}</p>
-                    </div>
-                    {patient.allergies && patient.allergies !== 'None' && (
-                        <span className="tag" style={{ background: 'var(--accent-light)', color: 'var(--accent)', fontSize: '0.7rem' }}>
-                            ⚠ {patient.allergies}
-                        </span>
-                    )}
-                </div>
-
-                {/* ═══ PATIENT OVERVIEW — What was told last time ═══ */}
-                {patient.visits?.length > 0 && (
-                    <div className="mb-4" style={{ animation: 'fadeInUp 0.3s ease' }}>
-                        {/* Last Visit Instructions Card */}
-                        <div className="last-instructions-card">
-                            <h5 className="text-xs font-bold mb-2">📋 LAST VISIT OVERVIEW — {patient.visits[0].date}</h5>
-                            <div className="patient-overview-grid">
-                                <div className="overview-card" style={{ borderLeftColor: 'var(--accent)', padding: '0.5rem' }}>
-                                    <h5 className="text-[10px] uppercase text-muted">Complaints</h5>
-                                    <p className="text-xs">{patient.visits[0].symptoms || 'N/A'}</p>
-                                </div>
-                                <div className="overview-card" style={{ borderLeftColor: 'var(--emerald)', padding: '0.5rem' }}>
-                                    <h5 className="text-[10px] uppercase text-muted">Diagnosis</h5>
-                                    <p className="text-xs">{patient.visits[0].diagnosis || 'N/A'}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Vitals Section */}
-                <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
-                    <Heart size={14} className="text-accent" /> Vitals
-                </h4>
-                <div className="vitals-grid mb-4">
-                    <div className="vital-input">
-                        <label className="text-[10px]">BP (mmHg)</label>
+        <div className="flex gap-6 consultation-interface animate-fade-in">
+            {/* Left Column — clinical assessment (60% width) */}
+            <div className="flex-[1.5] space-y-5">
+                
+                {/* 1. Vital Tiles */}
+                <div className="vitals-deck">
+                    <div className="vital-tile">
+                        <label>BP (mmHg)</label>
                         <input type="text" placeholder="120/80" value={vitals.bp}
                             onChange={e => setVitals({ ...vitals, bp: e.target.value })} />
                     </div>
-                    <div className="vital-input">
-                        <label className="text-[10px]">Temp (°F)</label>
-                        <input type="text" placeholder="98.6" value={vitals.temp}
-                            onChange={e => setVitals({ ...vitals, temp: e.target.value })} />
-                    </div>
-                    <div className="vital-input">
-                        <label className="text-[10px]">Pulse (bpm)</label>
+                    <div className="vital-tile">
+                        <label>Pulse (bpm)</label>
                         <input type="text" placeholder="72" value={vitals.pulse}
                             onChange={e => setVitals({ ...vitals, pulse: e.target.value })} />
                     </div>
-                    <div className="vital-input">
-                        <label className="text-[10px]">SpO₂ (%)</label>
+                    <div className="vital-tile">
+                        <label>SpO₂ (%)</label>
                         <input type="text" placeholder="98" value={vitals.spo2}
                             onChange={e => setVitals({ ...vitals, spo2: e.target.value })} />
                     </div>
-                    <div className="vital-input">
-                        <label className="text-[10px]">Weight (kg)</label>
-                        <input type="text" placeholder="65" value={vitals.weight}
+                    <div className="vital-tile">
+                        <label>Temp (°F)</label>
+                        <input type="text" placeholder="98.6" value={vitals.temp}
+                            onChange={e => setVitals({ ...vitals, temp: e.target.value })} />
+                    </div>
+                    <div className="vital-tile">
+                        <label>Weight (kg)</label>
+                        <input type="text" placeholder="00" value={vitals.weight}
                             onChange={e => setVitals({ ...vitals, weight: e.target.value })} />
                     </div>
                 </div>
 
-                {/* Symptoms */}
-                <div className="form-group">
-                    <label className="text-xs">Chief Complaints / Symptoms</label>
-                    <textarea className="text-xs" rows="2" placeholder="Enter symptoms..."
-                        value={symptoms} onChange={e => setSymptoms(e.target.value)}></textarea>
-                </div>
+                {/* 2. Observation Deck */}
+                <div className="observation-card">
+                    <h4><FileText size={18} className="text-primary" /> Examination & Findings</h4>
+                    
+                    <div className="space-y-6">
+                        <div className="form-group">
+                            <label className="!text-[10px] !text-main !font-black !tracking-widest">Chief Complaints</label>
+                            <textarea 
+                                className="premium-textarea" 
+                                rows="2" 
+                                placeholder="Patient's reported symptoms and duration..."
+                                value={symptoms} 
+                                onChange={e => setSymptoms(e.target.value)}
+                            ></textarea>
+                        </div>
 
-                {/* Diagnosis */}
-                <div className="form-group">
-                    <label className="text-xs">Diagnosis</label>
-                    <textarea className="text-xs" rows="1" placeholder="Enter clinical diagnosis..."
-                        value={diagnosis} onChange={e => setDiagnosis(e.target.value)}></textarea>
-                </div>
+                        <div className="grid grid-cols-2 gap-5">
+                            <div className="form-group">
+                                <label className="!text-[10px] !text-main !font-black !tracking-widest">Clinical Diagnosis</label>
+                                <textarea 
+                                    className="premium-textarea" 
+                                    rows="2" 
+                                    placeholder="Enter diagnosis..."
+                                    value={diagnosis} 
+                                    onChange={e => setDiagnosis(e.target.value)}
+                                ></textarea>
+                            </div>
+                            <div className="form-group">
+                                <label className="!text-[10px] !text-main !font-black !tracking-widest">Procedural Notes</label>
+                                <textarea 
+                                    className="premium-textarea" 
+                                    rows="2" 
+                                    placeholder="Any private or procedural notes..."
+                                    value={notes} 
+                                    onChange={e => setNotes(e.target.value)}
+                                ></textarea>
+                            </div>
+                        </div>
+                    </div>
 
-                {/* Doctor's Notes */}
-                <div className="form-group">
-                    <label className="text-xs">Doctor's Notes (Internal)</label>
-                    <textarea className="text-xs" rows="1" placeholder="Private notes..."
-                        value={notes} onChange={e => setNotes(e.target.value)}></textarea>
-                </div>
-
-                {/* Stylus Pad */}
-                <div className="stylus-section">
-                    <button className="stylus-toggle-btn" onClick={() => setShowStylusPad(!showStylusPad)} type="button">
-                        <PenTool size={13} className="text-primary" />
-                        <span className="text-xs">Sketch / Signature</span>
-                        {showStylusPad ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    </button>
+                    <div className="stylus-gate !mt-3 !mb-0" onClick={() => setShowStylusPad(!showStylusPad)}>
+                        <div className="flex items-center justify-center gap-2">
+                             <PenTool size={14} /> 
+                             <span>{showStylusPad ? 'Dismiss Drawing Pad' : 'Launch Digital Sketch Pad / Signature'}</span>
+                        </div>
+                    </div>
                     {showStylusPad && (
-                        <div className="mt-2">
-                            <StylusPad height={180} />
+                        <div className="mt-4 animate-scale-up">
+                            <StylusPad height={220} />
                         </div>
                     )}
+                </div>
+
+                {/* Lab Referrals Card */}
+                <div className="observation-card">
+                    <div className="flex justify-between items-center mb-4 pb-4 border-bottom border-border-light">
+                        <h4 className="!mb-0 !border-0"><TestTubes size={18} className="text-secondary" /> Lab Referrals</h4>
+                        <span className="text-[10px] bg-secondary/10 text-secondary px-2 py-1 rounded-full font-black uppercase">
+                            {selectedLabs.length} Selected
+                        </span>
+                    </div>
+                    
+                    <div className="flex gap-4">
+                        <div className="flex-1">
+                             <input 
+                                type="text" 
+                                placeholder="Find test (e.g. CBC, MRI...)" 
+                                className="premium-textarea !py-2.5 !text-sm mb-4"
+                                value={labSearch} 
+                                onChange={e => setLabSearch(e.target.value)} 
+                             />
+                             <div className="flex flex-wrap gap-2">
+                                {filteredLabs.slice(0, 12).map((lab, i) => (
+                                    <button 
+                                        key={i} 
+                                        type="button"
+                                        className="px-2 py-1 bg-background border border-border-light rounded-lg text-[10px] font-bold text-muted hover:border-secondary hover:text-secondary transition-all"
+                                        onClick={() => toggleLab(lab)}
+                                    >
+                                        + {lab}
+                                    </button>
+                                ))}
+                             </div>
+                        </div>
+                        {selectedLabs.length > 0 && (
+                            <div className="w-1/3 bg-background/50 rounded-xl p-4 border border-secondary/10">
+                                <p className="text-[10px] uppercase font-black text-secondary mb-3">Order Manifest</p>
+                                <div className="space-y-2">
+                                    {selectedLabs.map((l, i) => (
+                                        <div key={i} className="flex justify-between items-center bg-white p-2 rounded-lg border border-border-light text-[11px] font-bold">
+                                            <span>{l}</span>
+                                            <button onClick={() => toggleLab(l)} className="text-danger p-1"><X size={12}/></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {/* Right — Prescription & Lab Referrals */}
-            <div className="prescription-section glass">
-                <h3 className="font-bold mb-3 flex items-center gap-2 text-sm">
-                    <Pill size={16} className="text-primary" /> Medication & Dosage
-                </h3>
-
-                <div className="med-builder p-3 bg-background/50 rounded-lg">
-                    <div className="grid grid-cols-2 gap-2 mb-2">
-                        <div className="form-group mb-0">
-                            <label className="text-[10px]">Name</label>
-                            <input type="text" className="text-xs p-1" placeholder="Paracetamol" value={activeMeds.name}
-                                onChange={e => setActiveMeds({ ...activeMeds, name: e.target.value })} />
-                        </div>
-                        <div className="form-group mb-0">
-                            <label className="text-[10px]">Dosage</label>
-                            <input type="text" className="text-xs p-1" placeholder="500mg" value={activeMeds.dosage}
-                                onChange={e => setActiveMeds({ ...activeMeds, dosage: e.target.value })} />
-                        </div>
+            {/* Right Column — Prescription Builder (40% width) */}
+            <div className="flex-1 prescription-deck">
+                <div className="observation-card !p-0 overflow-hidden flex flex-col h-full !mb-0">
+                    <div className="p-5 border-bottom border-border-light bg-primary/5">
+                        <h4 className="!mb-0 !border-0"><Pill size={18} className="text-primary" /> Prescription Deck</h4>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 mb-2">
-                        <div className="form-group mb-0">
-                            <label className="text-[10px]">Frequency</label>
-                            <select className="text-xs p-1" value={activeMeds.frequency} onChange={e => setActiveMeds({ ...activeMeds, frequency: e.target.value })}>
-                                <option>1-0-1 (Twice a day)</option>
-                                <option>1-1-1 (Thrice a day)</option>
-                                <option>0-0-1 (At night)</option>
-                                <option>1-0-0 (Morning only)</option>
-                                <option>As needed (SOS)</option>
-                                <option>Stat (Now)</option>
-                            </select>
-                        </div>
-                        <div className="form-group mb-0">
-                            <label className="text-[10px]">Duration</label>
-                            <input type="text" className="text-xs p-1" placeholder="5 days" value={activeMeds.duration}
-                                onChange={e => setActiveMeds({ ...activeMeds, duration: e.target.value })} />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                        <div className="form-group mb-0">
-                            <label className="text-[10px]">Category</label>
-                            <select className="text-xs p-1" value={activeMeds.category} onChange={e => setActiveMeds({ ...activeMeds, category: e.target.value })}>
-                                <option value="medication">Medication</option>
-                                <option value="injection">Injection</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div className="form-group mb-0">
-                            <label className="text-[10px]">Dispense</label>
-                            <select className="text-xs p-1" value={activeMeds.dispenseType} onChange={e => setActiveMeds({ ...activeMeds, dispenseType: e.target.value })}>
-                                <option value="outdoor">Outdoor</option>
-                                <option value="indoor">Indoor</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button className="primary-btn-sm w-full" onClick={addMedicine}>
-                        <Plus size={12} /> Add
-                    </button>
-                </div>
-
-                <div className="prescribed-list mt-3 max-h-32 overflow-y-auto">
-                    {prescribedMeds.map((med) => (
-                        <div key={med.id} className="med-pill flex justify-between items-center p-2 mb-1 bg-background rounded border border-border">
-                            <div className="text-[11px]">
-                                <strong>{med.name} {med.dosage}</strong>
-                                <span className="text-muted block">{med.frequency} • {med.duration}</span>
+                    
+                    <div className="p-5 flex-1 overflow-y-auto space-y-6">
+                        {/* Builder */}
+                        <div className="rx-builder space-y-4">
+                            <div className="rx-builder-row-group">
+                                <div className="clinical-input-group">
+                                    <label>Drug Name & Strength</label>
+                                    <div className="flex gap-2">
+                                        <input type="text" className="clinical-input" style={{ flex: 2 }} placeholder="Metformin" value={activeMeds.name}
+                                            onChange={e => setActiveMeds({ ...activeMeds, name: e.target.value })} />
+                                        <input type="text" className="clinical-input" style={{ flex: 1 }} placeholder="500mg" value={activeMeds.dosage}
+                                            onChange={e => setActiveMeds({ ...activeMeds, dosage: e.target.value })} />
+                                    </div>
+                                </div>
                             </div>
-                            <button onClick={() => removeMed(med.id)} className="text-accent hover:text-red-500">
-                                <Trash2 size={12} />
+
+                            <div className="rx-builder-row-group">
+                                <div className="clinical-input-group">
+                                    <label>Frequency Routine</label>
+                                    <select className="clinical-input !text-sm" value={activeMeds.frequency} onChange={e => setActiveMeds({ ...activeMeds, frequency: e.target.value })}>
+                                        <option>1-0-1 (Twice daily)</option>
+                                        <option>1-1-1 (Thrice daily)</option>
+                                        <option>0-0-1 (At Bedtime)</option>
+                                        <option>1-0-0 (Empty Stomach)</option>
+                                        <option>SOS / PRN</option>
+                                        <option>Stat (Immediate)</option>
+                                    </select>
+                                </div>
+                                <div className="clinical-input-group">
+                                    <label>Duration</label>
+                                    <input type="text" className="clinical-input" placeholder="5 Days" value={activeMeds.duration}
+                                        onChange={e => setActiveMeds({ ...activeMeds, duration: e.target.value })} />
+                                </div>
+                            </div>
+
+                            <div className="rx-builder-row-group">
+                                <div className="clinical-input-group">
+                                    <label>Refill / Fulfillment</label>
+                                    <select className="clinical-input !text-sm" value={activeMeds.dispenseType} onChange={e => setActiveMeds({ ...activeMeds, dispenseType: e.target.value })}>
+                                        <option value="outdoor">Pharmacy (Outdoor)</option>
+                                        <option value="indoor">Hospital (Indoor)</option>
+                                    </select>
+                                </div>
+                                <button className="clinical-add-btn" onClick={addMedicine} title="Add medication to list">
+                                    <Plus size={20} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* List */}
+                        <div className="space-y-3">
+                            {prescribedMeds.length === 0 ? (
+                                <div className="py-20 text-center text-faint border border-dashed border-border-light rounded-2xl">
+                                    <Pill size={32} className="mx-auto mb-2 opacity-10" />
+                                    <p className="text-xs font-bold uppercase tracking-widest">No medications drafted</p>
+                                </div>
+                            ) : (
+                                prescribedMeds.map((med) => (
+                                    <div key={med.id} className="med-pill-premium">
+                                        <div className="med-info-group">
+                                            <span className="med-name-bold">{med.name} — {med.dosage}</span>
+                                            <span className="med-meta-light uppercase tracking-tighter">
+                                                {med.frequency} • {med.duration} • <span className={med.dispenseType === 'indoor' ? 'text-secondary' : 'text-primary'}>{med.dispenseType}</span>
+                                            </span>
+                                        </div>
+                                        <button onClick={() => removeMed(med.id)} className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-all">
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="p-5 border-top border-border-light bg-surface sticky bottom-0">
+                        <div className="action-stack">
+                            <button className="save-complete-btn !bg-emerald-600 hover:!bg-emerald-700 shadow-emerald-200" onClick={handleSaveAndComplete}>
+                                <LogOut size={20} /> End Consultation
                             </button>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Lab Referrals Mini */}
-                <div className="mt-3">
-                    <button className="stylus-toggle-btn p-2" onClick={() => setShowLabPanel(!showLabPanel)} type="button">
-                        <TestTubes size={13} className="text-secondary" />
-                        <span className="text-[11px]">Lab Referrals ({selectedLabs.length})</span>
-                        {showLabPanel ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    </button>
-                    {showLabPanel && (
-                        <div className="p-3 bg-background border border-border rounded-lg mt-1">
-                            <input type="text" placeholder="Search..." className="text-xs w-full p-1 mb-2 border rounded"
-                                value={labSearch} onChange={e => setLabSearch(e.target.value)} />
-                            <div className="flex flex-wrap gap-1">
-                                {filteredLabs.slice(0, 8).map((lab, i) => (
-                                    <span key={i} className="lab-tag text-[9px] p-1 bg-muted rounded cursor-pointer" onClick={() => toggleLab(lab)}>
-                                        + {lab}
-                                    </span>
-                                ))}
+                            <div className="flex gap-2">
+                                <button className="secondary-btn-sm flex-1 !py-3 !text-[12px] !border-none !bg-background" onClick={handleGeneratePDF}>
+                                    <Printer size={16} /> Generate Rx PDF
+                                </button>
+                                <button className="secondary-btn-sm flex-1 !py-3 !text-[12px] !border-none !bg-background" onClick={handleGenerateReferral}>
+                                     <Share2 size={16} /> Print Referrals
+                                </button>
                             </div>
                         </div>
-                    )}
-                </div>
-
-                {/* Diet Plan Mini */}
-                <div className="mt-2">
-                    <button className="stylus-toggle-btn p-2" onClick={() => setShowDietPanel(!showDietPanel)} type="button">
-                        <Apple size={13} className="text-emerald" />
-                        <span className="text-[11px]">Diet & Homecare</span>
-                        {showDietPanel ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    </button>
-                    {showDietPanel && (
-                        <div className="p-2 bg-background border border-border rounded-lg mt-1">
-                            <div className="flex flex-wrap gap-1 mb-2">
-                                {dietTemplates.slice(0, 4).map(t => (
-                                    <span 
-                                        key={t.id} 
-                                        className={`tag text-[9px] cursor-pointer ${selectedDietTemplate?.id === t.id ? 'active' : ''}`}
-                                        onClick={() => setSelectedDietTemplate(t)}
-                                        style={{ background: selectedDietTemplate?.id === t.id ? 'var(--emerald)' : 'var(--background)' }}
-                                    >
-                                        {t.ageGroup}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Action Buttons */}
-                <div className="mt-4 space-y-2">
-                    <button className="primary-btn-sm w-full py-2 bg-primary text-white" onClick={handleSaveAndComplete}>
-                        <CheckCircle2 size={14} /> Save Visit
-                    </button>
-                    <div className="flex gap-2">
-                        <button className="secondary-btn-sm flex-1 text-[11px]" onClick={handleGeneratePDF}>
-                             PDF Rx
-                        </button>
-                        <button className="secondary-btn-sm flex-1 text-[11px]" onClick={() => window.print()}>
-                             Print
-                        </button>
                     </div>
                 </div>
             </div>

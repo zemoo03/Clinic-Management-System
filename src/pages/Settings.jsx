@@ -3,7 +3,7 @@ import { Building2, Clock, Bell, Shield, Palette, Save, Moon, Sun, Minimize2 } f
 import { useAuth } from '../context/AuthContext';
 import PageHeader from '../components/PageHeader';
 import { showToast } from '../components/Toast';
-
+import '../styles/settings.css';
 const SETTINGS_KEY = 'scms_settings';
 
 const DEFAULT_SETTINGS = {
@@ -22,7 +22,6 @@ const DEFAULT_SETTINGS = {
     whatsappNotif: false,
     emailNotif: true,
     soundNotif: true,
-    theme: 'light',
     accentColor: 'indigo',
     compactMode: false,
 };
@@ -45,13 +44,6 @@ export const loadSettings = () => {
 
 export const applySettings = (settings) => {
     const root = document.documentElement;
-
-    // Theme
-    if (settings.theme === 'dark') {
-        root.setAttribute('data-theme', 'dark');
-    } else {
-        root.removeAttribute('data-theme');
-    }
 
     // Compact Mode
     if (settings.compactMode) {
@@ -99,15 +91,6 @@ const Settings = () => {
         root.style.setProperty('--primary-glow', clr.glow);
         root.style.setProperty('--shadow-primary', clr.shadow);
     }, [form.accentColor]);
-
-    // Live-preview theme
-    useEffect(() => {
-        if (form.theme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        } else {
-            document.documentElement.removeAttribute('data-theme');
-        }
-    }, [form.theme]);
 
     // Live-preview compact
     useEffect(() => {
@@ -218,29 +201,6 @@ const Settings = () => {
                 {/* Appearance */}
                 <div className="settings-card glass">
                     <h3><Palette size={18} className="text-primary" /> Appearance</h3>
-
-                    {/* Theme */}
-                    <div className="setting-row mb-4">
-                        <span className="setting-label">Theme</span>
-                        <div className="flex gap-2">
-                            <button
-                                type="button"
-                                onClick={() => set('theme', 'light')}
-                                className={`secondary-btn ${form.theme === 'light' ? 'active' : ''}`}
-                                style={{ gap: '0.35rem', fontSize: '0.82rem', ...(form.theme === 'light' ? { borderColor: 'var(--primary)', color: 'var(--primary)' } : {}) }}
-                            >
-                                <Sun size={14} /> Light
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => set('theme', 'dark')}
-                                className={`secondary-btn ${form.theme === 'dark' ? 'active' : ''}`}
-                                style={{ gap: '0.35rem', fontSize: '0.82rem', ...(form.theme === 'dark' ? { borderColor: 'var(--primary)', color: 'var(--primary)' } : {}) }}
-                            >
-                                <Moon size={14} /> Dark
-                            </button>
-                        </div>
-                    </div>
 
                     {/* Compact Mode */}
                     <div className="setting-row mb-4">

@@ -51,37 +51,51 @@ const Queue = () => {
     /* ── Handlers ── */
     const handleAddWalkIn = async (e) => {
         e.preventDefault();
-        const item = addToQueue(walkIn);
-        showToast(`${walkIn.name} added as ${item.token}`, 'success');
+        try {
+            const item = await addToQueue(walkIn);
+            showToast(`${walkIn.name} added as ${item.token}`, 'success');
 
-        if (canSendWhatsApp(item.mobile)) {
-            sendQueueWhatsAppAlert({
-                mobile: item.mobile,
-                token: item.token,
-                status: item.status,
-                clinicName: 'SmartClinic',
-                position: waitingList.length, // they are added at the end
-            });
+            if (canSendWhatsApp(item.mobile)) {
+                sendQueueWhatsAppAlert({
+                    mobile: item.mobile,
+                    token: item.token,
+                    status: item.status,
+                    clinicName: 'SmartClinic',
+                    position: waitingList.length,
+                });
+            }
+            setWalkIn({ name: '', mobile: '', type: 'Walk-in', fee: 300 });
+            setIsWalkInOpen(false);
+        } catch (err) {
+            showToast('Failed to add walk-in patient', 'error');
         }
-        setWalkIn({ name: '', mobile: '', type: 'Walk-in', fee: 300 });
-        setIsWalkInOpen(false);
     };
 
     const handleAddRegistered = async (patient) => {
-        const item = addToQueue({ id: patient.id, name: patient.name, mobile: patient.mobile, type: 'Registered', fee: 300 });
-        showToast(`${patient.name} added as ${item.token}`, 'success');
-
-        if (canSendWhatsApp(item.mobile)) {
-            sendQueueWhatsAppAlert({
-                mobile: item.mobile,
-                token: item.token,
-                status: item.status,
-                clinicName: 'SmartClinic',
-                position: waitingList.length,
+        try {
+            const item = await addToQueue({ 
+                patientId: patient.id, 
+                name: patient.name, 
+                mobile: patient.mobile, 
+                type: 'Registered', 
+                fee: 300 
             });
+            showToast(`${patient.name} added as ${item.token}`, 'success');
+
+            if (canSendWhatsApp(item.mobile)) {
+                sendQueueWhatsAppAlert({
+                    mobile: item.mobile,
+                    token: item.token,
+                    status: item.status,
+                    clinicName: 'SmartClinic',
+                    position: waitingList.length,
+                });
+            }
+            setIsRegisteredOpen(false);
+            setPatientSearch('');
+        } catch (err) {
+            showToast('Failed to add patient to queue', 'error');
         }
-        setIsRegisteredOpen(false);
-        setPatientSearch('');
     };
 
     /** Doctor or Assistant — start consultation */

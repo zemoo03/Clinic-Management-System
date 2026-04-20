@@ -1,64 +1,68 @@
 import { createContext, useContext, useState } from 'react';
+import api from '../services/api';
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(JSON.parse(localStorage.getItem('scms_user')));
+    const [user, setUser] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('scms_user')); }
+        catch { return null; }
+    });
     const [loading, setLoading] = useState(false);
 
     /**
-     * Login with role selection:
-     *  - 'doctor'     → Full consultation, EMR, prescription, lab referral access
-     *  - 'assistant'  → Patient registration, queue management, billing/receipts
+     * Real login — calls POST /api/auth/login
+     * Returns the user object on success, throws on failure.
      */
-    // identityIdOverride is used only for demo login so PatientDashboard can map to DEMO_PATIENTS ids.
-    const login = (name, role = 'doctor', clinicCode = 'CLINIC001', identityIdOverride = null) => {
-        const roleConfig = {
-            doctor: { defaultName: 'Dr. Payal Patel', idPrefix: 'doc_001' },
-            assistant: { defaultName: 'Receptionist', idPrefix: 'asst_001' },
-            patient: { defaultName: 'Patient Name', idPrefix: 'pat_001' },
-        };
+    const login = async (userId, password, clinicId = 'CLINIC001') => {
+        setLoading(true);
+        try {
+            const response = await api.post('/api/auth/login', { userId, password, clinicId });
+            const { token, user: userData } = response.data;
 
-        const cfg = roleConfig[role] || roleConfig.doctor;
+            // Persist token for API calls
+            localStorage.setItem('scms_token', token);
 
-        const userData = {
-            name: name || cfg.defaultName,
-            role,
-            id: identityIdOverride || cfg.idPrefix,
-            clinicId: clinicCode,
-            clinicName: 'SmartClinic',
-            clinicAddress: 'MG Road, Mumbai - 400001',
-            clinicPhone: '+91 98765 43210',
-            specialty: role === 'doctor' ? 'General Medicine' : role === 'patient' ? 'Patient' : 'Reception',
-            loggedInAt: new Date().toISOString(),
-        };
-        localStorage.setItem('scms_user', JSON.stringify(userData));
-        setUser(userData);
-        return Promise.resolve(userData);
+            // Build full user object for UI
+            const fullUser = {
+                id: userData.id,
+                name: userData.name,
+                role: userData.role,
+                clinicId: userData.clinicId,
+                clinicName: 'SmartClinic',
+                clinicAddress: 'MG Road, Mumbai - 400001',
+                clinicPhone: '+91 98765 43210',
+                specialty:
+                    userData.role === 'doctor' ? 'General Medicine'
+                    : userData.role === 'admin' ? 'Administration'
+                    : 'Reception',
+                loggedInAt: new Date().toISOString(),
+            };
+
+            localStorage.setItem('scms_user', JSON.stringify(fullUser));
+            setUser(fullUser);
+            return fullUser;
+        } finally {
+            setLoading(false);
+        }
     };
 
     const logout = () => {
+        localStorage.removeItem('scms_token');
         localStorage.removeItem('scms_user');
         setUser(null);
     };
 
-    const isDoctor = user?.role === 'doctor';
+    const isDoctor    = user?.role === 'doctor';
     const isAssistant = user?.role === 'assistant';
-    const isPatient = user?.role === 'patient';
-    const isDevAdmin = user?.role === 'dev';
+    const isAdmin     = user?.role === 'admin';
+    const isDevAdmin  = user?.role === 'dev';
 
-    const value = {
-        user,
-        login,
-        logout,
-        loading,
-        isDoctor,
-        isAssistant,
-        isPatient,
-        isDevAdmin,
-    };
-
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={{ user, login, logout, loading, isDoctor, isAssistant, isAdmin, isDevAdmin }}>
+            {children}
+        </AuthContext.Provider>
+    );
 };

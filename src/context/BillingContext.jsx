@@ -1,89 +1,79 @@
-import { createContext, useContext, useCallback, useState } from 'react';
+import { createContext, useContext, useCallback, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import api from '../services/api';
 
 const BillingContext = createContext();
 
 export const useBilling = () => useContext(BillingContext);
 
-const STORAGE_KEY = (clinicId) => `scms_${clinicId || 'default'}_shared_invoices`;
-
 export const BillingProvider = ({ children }) => {
     const { user } = useAuth();
-    const clinicId = user?.clinicId || 'default';
+    const [invoices, setInvoices] = useState([]);
+    const [loading, setLoading]   = useState(false);
 
-    const readFromStorage = () => {
+    // ─── Fetch from MongoDB ────────────────────────────────────────────────
+    const fetchInvoices = useCallback(async () => {
+        if (!user) return;
+        setLoading(true);
         try {
-            const raw = localStorage.getItem(STORAGE_KEY(clinicId));
-            return raw ? JSON.parse(raw) : [];
-        } catch {
-            return [];
+            const res = await api.get('/api/invoices');
+            setInvoices(res.data);
+        } catch (err) {
+            console.error('Failed to fetch invoices:', err.message);
+        } finally {
+            setLoading(false);
         }
-    };
+    }, [user]);
 
-    const [invoices, setInvoicesState] = useState(readFromStorage);
+    useEffect(() => {
+        fetchInvoices();
+    }, [fetchInvoices]);
 
-    const persist = (data) => {
-        localStorage.setItem(STORAGE_KEY(clinicId), JSON.stringify(data));
-    };
+    // ─── Add invoice ───────────────────────────────────────────────────────
+    const addInvoice = useCallback(async (data) => {
+        try {
+            const res = await api.post('/api/invoices', data);
+            setInvoices(prev => [res.data, ...prev]);
+            return res.data;
+        } catch (err) {
+            console.error('Failed to add invoice:', err.message);
+            throw err;
+        }
+    }, []);
 
-    const setInvoices = (updater) => {
-        setInvoicesState(prev => {
-            const next = typeof updater === 'function' ? updater(prev) : updater;
-            persist(next);
-            return next;
-        });
-    };
+    // ─── Mark as paid ──────────────────────────────────────────────────────
+    const markAsPaid = useCallback(async (invoiceId, method = 'Cash') => {
+        try {
+            const res = await api.patch(`/api/invoices/${invoiceId}`, { status: 'Paid', method });
+            setInvoices(prev => prev.map(inv => inv.id === invoiceId ? res.data : inv));
+        } catch (err) {
+            console.error('Failed to mark invoice as paid:', err.message);
+        }
+    }, []);
 
-    const addInvoice = useCallback((data) => {
-        const now = new Date();
-        const total = (data.items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-        const newInvoice = {
-            id: `INV-${Date.now()}`,
-            patient: data.patient || '',
-            patientId: data.patientId || '',
-            amount: total,
-            date: now.toISOString().split('T')[0],
-            time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-            status: 'Pending',
-            method: '-',
-            items: data.items || [],
-            diagnosis: data.diagnosis || '',
-            createdAt: now.toISOString(),
-        };
-        setInvoices(prev => [newInvoice, ...prev]);
-        return newInvoice;
-    }, []); // eslint-disable-line
+    // ─── Update invoice ────────────────────────────────────────────────────
+    const updateInvoice = useCallback(async (invoiceId, updates) => {
+        try {
+            const res = await api.patch(`/api/invoices/${invoiceId}`, updates);
+            setInvoices(prev => prev.map(inv => inv.id === invoiceId ? res.data : inv));
+        } catch (err) {
+            console.error('Failed to update invoice:', err.message);
+        }
+    }, []);
 
-    const markAsPaid = useCallback((invoiceId, method = 'Cash') => {
-        setInvoices(prev =>
-            prev.map(inv =>
-                inv.id === invoiceId ? { ...inv, status: 'Paid', method } : inv
-            )
-        );
-    }, []); // eslint-disable-line
-
-    const updateInvoice = useCallback((invoiceId, updates) => {
-        setInvoices(prev =>
-            prev.map(inv => inv.id === invoiceId ? { ...inv, ...updates } : inv)
-        );
-    }, []); // eslint-disable-line
-
-    const totalCollected = invoices
-        .filter(inv => inv.status === 'Paid')
-        .reduce((sum, inv) => sum + inv.amount, 0);
-
-    const totalPending = invoices
-        .filter(inv => inv.status === 'Pending')
-        .reduce((sum, inv) => sum + inv.amount, 0);
+    const totalCollected = invoices.filter(inv => inv.status === 'Paid').reduce((sum, inv) => sum + inv.amount, 0);
+    const totalPending   = invoices.filter(inv => inv.status === 'Pending').reduce((sum, inv) => sum + inv.amount, 0);
 
     return (
         <BillingContext.Provider value={{
             invoices,
+            loading,
             addInvoice,
             markAsPaid,
             updateInvoice,
             totalCollected,
             totalPending,
+            refresh: fetchInvoices,
         }}>
             {children}
         </BillingContext.Provider>

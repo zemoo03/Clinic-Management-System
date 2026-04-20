@@ -63,39 +63,12 @@
 }
 
 /* ========================================
-   DARK MODE
-   ======================================== */
-[data-theme="dark"] {
-    --bg-main: #020617;
-    --surface: #0f172a;
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --text-faint: #475569;
-    --border: #1e293b;
-    --border-light: #0f172a;
-
-    /* Modulate primary for dark mode */
-    --primary: hsl(var(--primary-h), 85%, 65%);
-    --primary-light: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
-    --primary-glow: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.25);
-
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
-}
-
-/* ========================================
    GLOBAL HELPERS
    ======================================== */
 .glass {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.4);
-}
-
-[data-theme="dark"] .glass {
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .text-gradient {

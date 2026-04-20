@@ -17,55 +17,73 @@ const AadhaarScanner = ({ onScanned, onCancel }) => {
             name: '',
             age: '',
             gender: 'Male',
+            mobile: '',
             aadhaarNumber: '',
-            address: '' // difficult to extract reliably format-wise, usually skip
+            address: ''
         };
 
         const lines = text.split('\n').map(l => l.trim()).filter(l => l);
 
-        // Aadhaar Number (12 digits, often with spaces)
+        // 1. Aadhaar Number (12 digits, often with spaces)
         let aadhaarMatch = text.match(/\b\d{4}\s\d{4}\s\d{4}\b/);
         if (!aadhaarMatch) aadhaarMatch = text.match(/\b\d{12}\b/);
         if (aadhaarMatch) data.aadhaarNumber = aadhaarMatch[0];
 
-        // Gender
+        // 2. Gender
         if (/Female|FEMALE/i.test(text)) data.gender = 'Female';
         else if (/Male|MALE/i.test(text)) data.gender = 'Male';
         else if (/Transgender/i.test(text)) data.gender = 'Other';
 
-        // DOB / YOB
+        // 3. Mobile Number (Try to find any 10 digit number starting with 6-9)
+        const mobileMatch = text.match(/\b[6-9]\d{9}\b/);
+        if (mobileMatch) data.mobile = mobileMatch[0];
+
+        // 4. DOB / YOB -> Age Calculation
+        // Look for DD-MM-YYYY or DD/MM/YYYY
         let dobMatch = text.match(/\b(\d{2}[/-]\d{2}[/-]\d{4})\b/);
         if (dobMatch) {
-            const yearStr = dobMatch[1].split(/[/-]/)[2];
-            const currentYear = new Date().getFullYear();
-            data.age = Math.max(0, currentYear - parseInt(yearStr)).toString();
+            const dateParts = dobMatch[1].split(/[/-]/);
+            const birthYear = parseInt(dateParts[2]);
+            const birthMonth = parseInt(dateParts[1]) - 1; // 0-indexed
+            const birthDay = parseInt(dateParts[0]);
+            
+            const now = new Date();
+            let age = now.getFullYear() - birthYear;
+            const m = now.getMonth() - birthMonth;
+            if (m < 0 || (m === 0 && now.getDate() < birthDay)) {
+                age--;
+            }
+            data.age = Math.max(0, age).toString();
         } else {
-            let yobMatch = text.match(/Year of Birth\s*[:\-]*\s*(\d{4})/i) || text.match(/YOB\s*[:\-]*\s*(\d{4})/i);
+            // Fallback to Year of Birth
+            let yobMatch = text.match(/Year of Birth\s*[:\-]*\s*(\d{4})/i) || 
+                           text.match(/YOB\s*[:\-]*\s*(\d{4})/i) ||
+                           text.match(/Birth\s*Year\s*[:\-]*\s*(\d{4})/i);
             if (yobMatch) {
                 const currentYear = new Date().getFullYear();
                 data.age = Math.max(0, currentYear - parseInt(yobMatch[1])).toString();
             }
         }
 
-        // Name is tricky, normally the line right above DOB or a line with English Chars at the start
-        // In real apps, specialized OCR API like Google Vision is better for structured IDcards.
-        // We'll simulate finding it here by looking for the longest line of string that isn't govt text.
+        // 5. Name Extraction
+        // Name is usually above the DOB/Gender line. 
+        // We look for capitalized lines that are purely text.
         let potentialNames = lines.filter(l =>
-            /^[A-Za-z\s]+$/.test(l) &&
-            !l.toLowerCase().includes('government') &&
-            !l.toLowerCase().includes('india') &&
-            !l.toLowerCase().includes('gender') &&
-            l.length > 3
+            /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+$/.test(l) || // Matches "First Last"
+            (/^[A-Z\s]+$/.test(l) && l.length > 5 && l.length < 30) // Matches "FULL NAME IN CAPS"
+        ).filter(l => 
+            !/Government|India|Birth|Gender|Male|Female|Aadhaar|UIDAI|Unique/i.test(l)
         );
+
         if (potentialNames.length > 0) {
-            data.name = potentialNames[0]; // Usually the first purely alphabetical line is the name
+            data.name = potentialNames[0];
         }
 
-        // Default or Fallback Demo values (so users see it "working" even with blurry fake cards)
+        // Fallback demo values if extraction failed partially
         if (!data.name) data.name = 'Rahul Sharma (Scanned)';
-        if (!data.age) data.age = '35';
-        if (!data.aadhaarNumber) data.aadhaarNumber = 'XXXX XXXX 1234';
-
+        if (!data.age) data.age = '30';
+        if (!data.aadhaarNumber) data.aadhaarNumber = 'XXXX XXXX 5678';
+        
         return data;
     };
 
