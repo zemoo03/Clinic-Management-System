@@ -1,5 +1,5 @@
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export const generatePrescriptionPDF = ({ clinic, patient, symptoms, diagnosis, medicines, vitals, labReferrals, date }) => {
     const doc = new jsPDF();
@@ -78,7 +78,7 @@ export const generatePrescriptionPDF = ({ clinic, patient, symptoms, diagnosis, 
     // Medicines Table
     y += 15;
     if (medicines && medicines.length > 0) {
-        doc.autoTable({
+        autoTable(doc, {
             startY: y,
             head: [['#', 'Medicine', 'Dosage', 'Frequency', 'Duration']],
             body: medicines.map((med, i) => [
@@ -124,8 +124,12 @@ export const generatePrescriptionPDF = ({ clinic, patient, symptoms, diagnosis, 
 };
 
 export const downloadPrescription = (data) => {
-    const doc = generatePrescriptionPDF(data);
-    doc.save(`Prescription_${data.patient?.name?.replace(/\s/g, '_') || 'patient'}_${Date.now()}.pdf`);
+    try {
+        const doc = generatePrescriptionPDF(data);
+        doc.save(`Prescription_${data.patient?.name?.replace(/\s/g, '_') || 'patient'}_${Date.now()}.pdf`);
+    } catch (error) {
+        console.error('Failed to download prescription:', error);
+    }
 };
 
 // ─── Referral Slip PDF ───
@@ -168,7 +172,7 @@ export const generateReferralSlip = ({ clinic, patient, diagnosis, tests, date }
     // Tests Table
     y += 15;
     if (tests && tests.length > 0) {
-        doc.autoTable({
+        autoTable(doc, {
             startY: y,
             head: [['#', 'Test / Investigation']],
             body: tests.map((t, i) => [i + 1, t]),
@@ -192,13 +196,19 @@ export const generateReferralSlip = ({ clinic, patient, diagnosis, tests, date }
 };
 
 export const downloadReferralSlip = (data) => {
-    const doc = generateReferralSlip(data);
-    doc.save(`Referral_${data.patient?.name?.replace(/\s/g, '_') || 'patient'}_${Date.now()}.pdf`);
+    try {
+        const doc = generateReferralSlip(data);
+        doc.save(`Referral_${data.patient?.name?.replace(/\s/g, '_') || 'patient'}_${Date.now()}.pdf`);
+    } catch (error) {
+        console.error('Failed to download referral slip:', error);
+    }
 };
 
-export const generateInvoicePDF = ({ clinic, patient, items, invoiceId, date }) => {
+export const generateInvoicePDF = ({ clinic, patient, items, id, invoiceId, date }) => {
     const doc = new jsPDF();
+    const finalId = id || invoiceId || 'INV-0000';
 
+    // Header
     doc.setFillColor(79, 70, 229);
     doc.rect(0, 0, 210, 35, 'F');
     doc.setTextColor(255, 255, 255);
@@ -206,26 +216,32 @@ export const generateInvoicePDF = ({ clinic, patient, items, invoiceId, date }) 
     doc.setFont('helvetica', 'bold');
     doc.text('INVOICE', 14, 18);
     doc.setFontSize(10);
-    doc.text(`${clinic?.name || 'SmartClinic'}`, 14, 28);
-    doc.text(`#${invoiceId || 'INV-0000'}`, 196, 18, { align: 'right' });
+    doc.text(`${clinic?.clinicName || clinic?.name || 'SmartClinic'}`, 14, 28);
+    doc.text(`#${finalId}`, 196, 18, { align: 'right' });
     doc.text(`Date: ${date || new Date().toLocaleDateString('en-IN')}`, 196, 28, { align: 'right' });
 
+    // Bill To
     doc.setTextColor(30, 41, 59);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.text('Bill To:', 14, 48);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${patient?.name || 'Patient'}`, 14, 55);
-    doc.text(`Phone: ${patient?.mobile || ''}`, 14, 62);
+    
+    // Handle patient as string or object
+    const patientName = typeof patient === 'string' ? patient : (patient?.name || 'Patient');
+    doc.text(patientName, 14, 55);
+    if (patient?.mobile) {
+        doc.text(`Phone: ${patient.mobile}`, 14, 62);
+    }
 
     if (items && items.length > 0) {
-        const total = items.reduce((sum, item) => sum + (item.amount || 0), 0);
-        doc.autoTable({
+        const total = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+        autoTable(doc, {
             startY: 72,
             head: [['#', 'Description', 'Amount (₹)']],
             body: [
                 ...items.map((item, i) => [i + 1, item.description, `₹${item.amount}`]),
-                ['', { content: 'TOTAL', styles: { fontStyle: 'bold' } }, { content: `₹${total}`, styles: { fontStyle: 'bold' } }]
+                ['', { content: 'TOTAL', styles: { fontStyle: 'bold', halign: 'right' } }, { content: `₹${total.toLocaleString()}`, styles: { fontStyle: 'bold' } }]
             ],
             styles: { fontSize: 10, cellPadding: 5 },
             headStyles: { fillColor: [79, 70, 229] },
@@ -233,5 +249,23 @@ export const generateInvoicePDF = ({ clinic, patient, items, invoiceId, date }) 
         });
     }
 
+    // Footer
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    doc.text('Thank you for choosing our clinic!', 105, pageHeight - 20, { align: 'center' });
+
     return doc;
+};
+
+export const downloadInvoice = (data) => {
+    try {
+        console.log('Generating invoice PDF with data:', data);
+        const doc = generateInvoicePDF(data);
+        const fileName = `Invoice_${data.id || data.invoiceId || 'INV'}_${Date.now()}.pdf`;
+        doc.save(fileName);
+        console.log('Invoice PDF saved as:', fileName);
+    } catch (error) {
+        console.error('Failed to download invoice:', error);
+    }
 };

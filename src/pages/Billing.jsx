@@ -7,8 +7,11 @@ import Modal from '../components/Modal';
 import EmptyState from '../components/EmptyState';
 import { showToast } from '../components/Toast';
 import useBilling from '../hooks/useBilling';
+import { useAuth } from '../context/AuthContext';
+import { downloadInvoice } from '../utils/pdfUtils';
 
 const Billing = () => {
+    const { user } = useAuth();
     const { invoices, addInvoice, markAsPaid, totalCollected, totalPending } = useBilling();
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -128,7 +131,7 @@ const Billing = () => {
                                             <button className="icon-btn" title="View" onClick={() => setViewInvoice(inv)}>
                                                 <Eye size={15} />
                                             </button>
-                                            <button className="icon-btn primary" title="Download PDF">
+                                            <button className="icon-btn primary" title="Download PDF" onClick={() => downloadInvoice({ ...inv, clinic: user })}>
                                                 <Download size={15} />
                                             </button>
                                         </div>
@@ -269,7 +272,7 @@ const Billing = () => {
                                     <Wallet size={16} /> Mark as Paid
                                 </button>
                             )}
-                            <button className="secondary-btn flex-1">
+                            <button className="secondary-btn flex-1" onClick={() => downloadInvoice({ ...viewInvoice, clinic: user })}>
                                 <Download size={14} /> Download PDF
                             </button>
                         </div>
