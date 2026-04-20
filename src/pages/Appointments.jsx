@@ -99,8 +99,9 @@ const Queue = () => {
     };
 
     /** Doctor or Assistant — start consultation */
-    const handleStartConsultation = async (token, name, mobile) => {
-        callPatient(token);
+    const handleStartConsultation = async (item) => {
+        const { token, name, mobile, date } = item;
+        await callPatient(token, date);
         showToast(`🩺 Consultation started with ${name}`, 'success');
 
         if (canSendWhatsApp(mobile)) {
@@ -116,8 +117,8 @@ const Queue = () => {
     };
 
     /** Doctor or Assistant — end consultation */
-    const handleEndConsultation = (token, name) => {
-        markCompleted(token);
+    const handleEndConsultation = async (token, name, date) => {
+        await markCompleted(token, date);
         showToast(`✅ Session ended — ${name} marked as Completed`, 'success');
     };
 
@@ -194,7 +195,7 @@ const Queue = () => {
                     <div className="flex items-center gap-3">
                         <button
                             className="end-session-btn"
-                            onClick={() => handleEndConsultation(consultingItem.token, consultingItem.name)}
+                            onClick={() => handleEndConsultation(consultingItem.token, consultingItem.name, consultingItem.date)}
                         >
                             <CheckCircle2 size={18} />
                             End Session
@@ -283,7 +284,7 @@ const Queue = () => {
                                                 <button
                                                     className="start-consult-btn"
                                                     title="Start Consultation"
-                                                    onClick={() => handleStartConsultation(item.token, item.name, item.mobile)}
+                                                    onClick={() => handleStartConsultation(item)}
                                                 >
                                                     <Play size={13} fill="currentColor" />
                                                     Start
@@ -298,10 +299,10 @@ const Queue = () => {
 
                                         {/* ── CONSULTING: Doctor OR Assistant can end session ── */}
                                         {item.status === 'Consulting' && (isDoctor || isAssistant) && (
-                                            <button
+                                                <button
                                                 className="end-session-btn-sm"
                                                 title="End Consultation"
-                                                onClick={() => handleEndConsultation(item.token, item.name)}
+                                                onClick={() => handleEndConsultation(item.token, item.name, item.date)}
                                             >
                                                 <CheckCircle2 size={14} />
                                                 Done

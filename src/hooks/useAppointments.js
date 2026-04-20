@@ -18,20 +18,26 @@ const useQueue = () => {
     const nextToken       = `T-${String(nextTokenNum).padStart(3, '0')}`;
 
     // ─── Call patient (Waiting → Consulting) ───────────────────────────────
-    const callPatient = useCallback(async (token) => {
+    const callPatient = useCallback(async (token, date) => {
         try {
-            const res = await api.patch(`/api/appointments/${token}/status`, { status: 'Consulting' });
+            const res = await api.patch(`/api/appointments/${token}/status`, { 
+                status: 'Consulting',
+                date: date || today 
+            });
             await fetchQueue();
             return res.data;
         } catch (err) {
             console.error('Failed to call patient:', err.message);
         }
-    }, [fetchQueue]);
+    }, [fetchQueue, today]);
 
     // ─── Mark completed ────────────────────────────────────────────────────
-    const markCompleted = useCallback(async (token) => {
+    const markCompleted = useCallback(async (token, date) => {
         try {
-            const res = await api.patch(`/api/appointments/${token}/status`, { status: 'Completed' });
+            const res = await api.patch(`/api/appointments/${token}/status`, { 
+                status: 'Completed',
+                date: date || today
+            });
             // Since context manages allQueue, we should ideally have a method in context to update small bits,
             // but for now, we can manually trigger a fetch or wait for polling if implemented.
             // A better way: context provides setAllQueue or a dispatch.
@@ -39,7 +45,7 @@ const useQueue = () => {
         } catch (err) {
             console.error('Failed to mark completed:', err.message);
         }
-    }, [fetchQueue]);
+    }, [fetchQueue, today]);
 
     // ─── Skip patient ──────────────────────────────────────────────────────
     const skipPatient = useCallback(async (token) => {
@@ -52,14 +58,17 @@ const useQueue = () => {
     }, [fetchQueue]);
 
     // ─── Update fee ────────────────────────────────────────────────────────
-    const updateFee = useCallback(async (token, fee) => {
+    const updateFee = useCallback(async (token, fee, date) => {
         try {
-            await api.patch(`/api/appointments/${token}/fee`, { fee: Number(fee) });
+            await api.patch(`/api/appointments/${token}/fee`, { 
+                fee: Number(fee),
+                date: date || today
+            });
             await fetchQueue();
         } catch (err) {
             console.error('Failed to update fee:', err.message);
         }
-    }, [fetchQueue]);
+    }, [fetchQueue, today]);
 
     return {
         queue,

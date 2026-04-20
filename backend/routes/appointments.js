@@ -74,16 +74,23 @@ router.post('/', verifyToken, async (req, res) => {
 // PATCH update appointment status
 router.patch('/:token/status', verifyToken, async (req, res) => {
     try {
-        const { status } = req.body;
-        // If calling a patient to Consulting, auto-complete previous Consulting
+        const { status, date } = req.body;
+        const filter = { token: req.params.token, clinicId: req.user.clinicId };
+        if (date) filter.date = date;
+
+        // If calling a patient to Consulting, auto-complete previous Consulting ON THE SAME DATE
         if (status === 'Consulting') {
+            const completionFilter = { clinicId: req.user.clinicId, status: 'Consulting' };
+            if (date) completionFilter.date = date;
+            
             await Appointment.updateMany(
-                { clinicId: req.user.clinicId, status: 'Consulting' },
+                completionFilter,
                 { $set: { status: 'Completed' } }
             );
         }
+
         const updated = await Appointment.findOneAndUpdate(
-            { token: req.params.token, clinicId: req.user.clinicId },
+            filter,
             { $set: { status } },
             { new: true }
         );
@@ -97,11 +104,16 @@ router.patch('/:token/status', verifyToken, async (req, res) => {
 // PATCH update fee
 router.patch('/:token/fee', verifyToken, async (req, res) => {
     try {
+        const { fee, date } = req.body;
+        const filter = { token: req.params.token, clinicId: req.user.clinicId };
+        if (date) filter.date = date;
+
         const updated = await Appointment.findOneAndUpdate(
-            { token: req.params.token, clinicId: req.user.clinicId },
-            { $set: { fee: Number(req.body.fee) } },
+            filter,
+            { $set: { fee: Number(fee) } },
             { new: true }
         );
+        if (!updated) return res.status(404).json({ error: 'Appointment not found' });
         res.json(updated);
     } catch (err) {
         res.status(500).json({ error: err.message });
